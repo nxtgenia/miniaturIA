@@ -66,7 +66,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, c
             {...getRootProps()}
             className={cn(
               "border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all min-h-[240px]",
-              isDragActive ? "border-emerald-500 bg-emerald-500/5" : "border-white/10 hover:border-white/20 bg-white/5"
+              isDragActive ? "border-red-600 bg-red-600/5" : "border-white/10 hover:border-white/20 bg-white/5"
             )}
           >
             <input {...getInputProps()} />
@@ -79,8 +79,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, c
 
           {/* YouTube Link */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col justify-center min-h-[240px]">
-            <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
-              <Youtube className="w-6 h-6 text-red-500" />
+            <div className="w-12 h-12 bg-red-600/10 rounded-full flex items-center justify-center mb-4">
+              <Youtube className="w-6 h-6 text-red-600" />
             </div>
             <p className="text-white font-medium mb-4">Desde YouTube</p>
             <form onSubmit={handleYtSubmit} className="space-y-3">
@@ -91,7 +91,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, c
                   value={ytUrl}
                   onChange={(e) => setYtUrl(e.target.value)}
                   placeholder="Pega la URL del video..."
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-red-600/50 transition-colors"
                 />
               </div>
               <button
@@ -116,7 +116,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, c
             </button>
           </div>
           <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-emerald-500" />
+            <ImageIcon className="w-4 h-4 text-red-600" />
             <span className="text-xs font-medium text-white">Imagen Base</span>
           </div>
         </div>

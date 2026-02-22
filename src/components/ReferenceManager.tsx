@@ -61,7 +61,7 @@ export const ReferenceManager: React.FC<ReferenceManagerProps> = ({ references, 
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 text-[10px] font-mono text-emerald-400 text-center">
+              <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 text-[10px] font-mono text-red-500 text-center">
                 {ref.tag}
               </div>
             </motion.div>
@@ -73,7 +73,7 @@ export const ReferenceManager: React.FC<ReferenceManagerProps> = ({ references, 
             {...getRootProps()}
             className={`
               aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all
-              ${isDragActive ? 'border-emerald-500 bg-emerald-500/5' : 'border-white/10 hover:border-white/20 bg-white/5'}
+              ${isDragActive ? 'border-red-600 bg-red-600/5' : 'border-white/10 hover:border-white/20 bg-white/5'}
             `}
           >
             <input {...getInputProps()} />
@@ -84,9 +84,9 @@ export const ReferenceManager: React.FC<ReferenceManagerProps> = ({ references, 
       </div>
 
       {references.length > 0 && (
-        <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
-          <p className="text-[11px] text-emerald-200/60 leading-relaxed">
-            Usa <span className="text-emerald-400 font-mono">@img1-3</span> para personajes y <span className="text-emerald-400 font-mono">@obj1-3</span> para objetos en tu prompt.
+        <div className="p-3 bg-red-600/5 border border-red-600/10 rounded-xl">
+          <p className="text-[11px] text-red-200/60 leading-relaxed">
+            Usa <span className="text-red-500 font-mono">@img1-3</span> para personajes y <span className="text-red-500 font-mono">@obj1-3</span> para objetos en tu prompt.
           </p>
         </div>
       )}
