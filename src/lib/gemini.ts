@@ -69,6 +69,10 @@ ${referenceImages.length > 0 ? 'REFERENCE IMAGES: Use the subsequent images as c
       throw new Error("Error interno de generación (IMAGE_OTHER). Esto suele ocurrir cuando el modelo no puede procesar la combinación de imágenes y prompt. Intenta simplificar las instrucciones o usar menos imágenes de referencia.");
     }
 
+    if (candidate.finishReason === 'IMAGE_RECITATION') {
+      throw new Error("La generación fue bloqueada por derechos de autor (IMAGE_RECITATION). El modelo detectó una similitud excesiva con contenido protegido. Intenta cambiar ligeramente el prompt o usar una imagen base diferente.");
+    }
+
     let modelTextResponse = "";
     if (candidate.content?.parts) {
       for (const part of candidate.content.parts) {

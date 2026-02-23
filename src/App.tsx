@@ -22,6 +22,7 @@ export default function App() {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const handleAddReference = (data: string) => {
@@ -80,6 +81,32 @@ export default function App() {
     link.click();
   };
 
+  const handleUseAsBase = () => {
+    if (!resultImage) return;
+    if (baseImage) {
+      setHistory(prev => [...prev, baseImage]);
+    }
+    setBaseImage(resultImage);
+    setResultImage(null);
+    setPrompt('');
+  };
+
+  const handleUndo = () => {
+    if (history.length === 0) return;
+    const newHistory = [...history];
+    const previousImage = newHistory.pop();
+    setHistory(newHistory);
+    setBaseImage(previousImage || null);
+    setResultImage(null);
+  };
+
+  const handleClearBase = () => {
+    if (baseImage) {
+      setHistory(prev => [...prev, baseImage]);
+    }
+    setBaseImage(null);
+  };
+
   return (
     <ApiKeyGuard>
       <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-red-600/30">
@@ -129,12 +156,30 @@ export default function App() {
                 {/* Left Column: Controls */}
                 <div className="lg:col-span-5 space-y-10">
                   <section className="space-y-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Layers className="w-4 h-4 text-red-600" />
-                      <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Paso 1: Imagen Base</h2>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-red-600" />
+                        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Paso 1: Imagen Base</h2>
+                      </div>
+                      {history.length > 0 && (
+                        <button
+                          onClick={handleUndo}
+                          className="text-[10px] font-mono text-zinc-500 hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-2 py-1 rounded border border-white/10"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          DESHACER
+                        </button>
+                      )}
                     </div>
                     <ImageUploader 
-                      onImageSelected={setBaseImage} 
+                      onImageSelected={(img) => {
+                        if (img === '') {
+                          handleClearBase();
+                        } else {
+                          if (baseImage) setHistory(prev => [...prev, baseImage]);
+                          setBaseImage(img);
+                        }
+                      }} 
                       currentImage={baseImage} 
                     />
                   </section>
@@ -197,15 +242,26 @@ export default function App() {
                   <div className="sticky top-28 space-y-6">
                     <div className="flex items-center justify-between">
                       <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Resultado</h2>
-                      {resultImage && (
-                        <button
-                          onClick={handleDownload}
-                          className="flex items-center gap-2 text-xs font-medium text-red-500 hover:text-red-400 transition-colors"
-                        >
-                          <Download className="w-4 h-4" />
-                          Descargar PNG
-                        </button>
-                      )}
+                      <div className="flex items-center gap-4">
+                        {resultImage && (
+                          <>
+                            <button
+                              onClick={handleUseAsBase}
+                              className="flex items-center gap-2 text-xs font-medium text-white hover:text-red-400 transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"
+                            >
+                              <Layers className="w-4 h-4" />
+                              Usar como base
+                            </button>
+                            <button
+                              onClick={handleDownload}
+                              className="flex items-center gap-2 text-xs font-medium text-red-500 hover:text-red-400 transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Descargar PNG
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     <div className="relative aspect-video rounded-3xl border border-white/10 bg-zinc-900/50 overflow-hidden shadow-2xl group">
