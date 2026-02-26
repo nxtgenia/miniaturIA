@@ -31,9 +31,9 @@ export async function generateThumbnail(
   prompt: string,
   referenceImages: { data: string; mimeType: string; tag?: string }[] = []
 ) {
-  const kieApiKey = process.env.KIE_API_KEY;
+  const kieApiKey = import.meta.env.VITE_KIE_API_KEY || "829cd2d2053471505b30f196c5d5cc61";
   if (!kieApiKey) {
-    throw new Error("Falta la clave KIE_API_KEY en el archivo .env");
+    throw new Error("Falta la clave VITE_KIE_API_KEY");
   }
 
   // Upload images to get URLs (kie.ai requires URLs, not base64)
@@ -159,7 +159,7 @@ export function getYouTubeThumbnail(url: string) {
 }
 
 export async function generateViralTitles(topic: string, channelUrl: string = "", fixedWord: string = "", wordPosition: 'start' | 'end' = 'end') {
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = GEMINI_API_KEY;
   const ai = new GoogleGenAI({ apiKey });
 
   let systemInstruction = `Eres un experto en "Packaging" de YouTube con un enfoque humano y conversacional.
