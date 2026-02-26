@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { Type, Sparkles, Copy, Check, RefreshCw, AlertCircle, Youtube } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateViralTitles } from '../lib/gemini';
+import { useCredits } from '../contexts/CreditsContext';
+import Paywall from './Paywall';
 
 export const TitleGenerator: React.FC = () => {
+  const { useCredits: spendCredits, hasEnoughCredits } = useCredits();
+  const [showPaywall, setShowPaywall] = useState(false);
   const [topic, setTopic] = useState('');
   const [channelUrl, setChannelUrl] = useState('');
   const [fixedWord, setFixedWord] = useState('');
@@ -15,11 +19,23 @@ export const TitleGenerator: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!topic) return;
+
+    // Check credits before generating
+    if (!hasEnoughCredits(4)) {
+      setShowPaywall(true);
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
     try {
       const result = await generateViralTitles(topic, channelUrl, fixedWord, wordPosition);
       setTitles(result.titles || []);
+
+      // Deduct credits on successful generation
+      if (result.titles && result.titles.length > 0) {
+        await spendCredits(4);
+      }
     } catch (err: any) {
       console.error(err);
       setError('Error al generar títulos: ' + (err.message || 'Inténtalo de nuevo.'));
@@ -170,6 +186,13 @@ export const TitleGenerator: React.FC = () => {
           <p className="text-sm text-[#717171]">Ingresa un tema para ver la magia</p>
         </div>
       )}
+
+      {/* Paywall Modal */}
+      <AnimatePresence>
+        {showPaywall && (
+          <Paywall onClose={() => setShowPaywall(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
