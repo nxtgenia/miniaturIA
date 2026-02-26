@@ -19,6 +19,11 @@ export const ApiKeyGuard: React.FC<ApiKeyGuardProps> = ({ children }) => {
   const [hasKey, setHasKey] = useState<boolean | null>(null);
 
   const checkKey = async () => {
+    // When running locally (outside AI Studio), skip the guard
+    if (!window.aistudio) {
+      setHasKey(true);
+      return;
+    }
     try {
       const selected = await window.aistudio.hasSelectedApiKey();
       setHasKey(selected);
@@ -42,16 +47,16 @@ export const ApiKeyGuard: React.FC<ApiKeyGuardProps> = ({ children }) => {
 
   if (!hasKey) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-sans text-white">
-        <motion.div 
+      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center p-6 font-sans text-white">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-[#141414] border border-white/10 rounded-2xl p-8 shadow-2xl"
+          className="max-w-md w-full bg-[#272727]/30 border border-white/10 rounded-xl p-8 shadow-2xl"
         >
-          <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 mx-auto">
-            <Key className="w-8 h-8 text-emerald-500" />
+          <div className="w-16 h-16 bg-[#FF0000]/10 rounded-full flex items-center justify-center mb-6 mx-auto">
+            <Key className="w-8 h-8 text-[#FF0000]" />
           </div>
-          
+
           <h1 className="text-2xl font-semibold text-center mb-2">Configuración Requerida</h1>
           <p className="text-zinc-400 text-center mb-8 text-sm leading-relaxed">
             Para usar <span className="text-white font-medium">MiniaturIA</span> con Gemini 3 Pro, necesitas seleccionar una clave de API de un proyecto de Google Cloud con facturación activa.
@@ -60,14 +65,14 @@ export const ApiKeyGuard: React.FC<ApiKeyGuardProps> = ({ children }) => {
           <div className="space-y-4">
             <button
               onClick={handleOpenSelector}
-              className="w-full py-4 bg-white text-black font-semibold rounded-xl hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-4 bg-[#F1F1F1] text-[#0F0F0F] font-semibold rounded-xl hover:bg-zinc-300 transition-colors flex items-center justify-center gap-2"
             >
               Seleccionar Clave de API
             </button>
-            
-            <a 
-              href="https://ai.google.dev/gemini-api/docs/billing" 
-              target="_blank" 
+
+            <a
+              href="https://ai.google.dev/gemini-api/docs/billing"
+              target="_blank"
               rel="noopener noreferrer"
               className="w-full py-3 border border-white/10 text-zinc-400 font-medium rounded-xl hover:bg-white/5 transition-colors flex items-center justify-center gap-2 text-sm"
             >

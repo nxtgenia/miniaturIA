@@ -1,19 +1,162 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --font-display: "Space Grotesk", sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a #0a0a0a;
 }
 
 body {
-  background-color: #050505;
-  color: #ffffff;
+  background-color: #0a0a0a;
+  color: #f1f1f1;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background-color: rgba(16, 185, 129, 0.3);
+  background-color: rgba(255, 0, 0, 0.4);
   color: #ffffff;
+}
+
+/* Generate glow button — RED */
+.glow-btn {
+  background-color: #ff0000;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+.glow-btn:hover:not(:disabled) {
+  background-color: #cc0000;
+  box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+.glow-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.glow-btn:disabled {
+  background-color: #1c1c1e;
+  color: #555;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Chat bottom red glow */
+.chat-bottom-glow {
+  position: relative;
+}
+
+.chat-bottom-glow::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 120px;
+  background: radial-gradient(ellipse at center bottom, rgba(255, 0, 0, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Sidebar styles */
+.sidebar {
+  transition: width 0.2s ease, transform 0.2s ease;
+}
+
+/* App logo avatar */
+.app-logo-avatar {
+  background: #ff0000;
+  color: white;
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: -0.5px;
+}
+
+/* Infinite Marquee */
+.mask-fade-edges {
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Background Blobs Animation */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 10s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Subtle Gradient border */
+.gradient-border-card {
+  position: relative;
+  background: #141414;
+  border-radius: 24px;
+  z-index: 1;
+}
+
+.gradient-border-card::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  border-radius: 25px;
+  background: linear-gradient(45deg, #ff0000, transparent, #ff4444, transparent);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gradient-border-card:hover::before {
+  opacity: 1;
 }

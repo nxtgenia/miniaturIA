@@ -1,105 +1,149 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { API_URL } from './config';
 
-export const MODELS = {
-  PRO_IMAGE: "gemini-3-pro-image-preview",
-};
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const KIE_API_BASE = "https://api.kie.ai";
+
+// Helper: Upload image via server-side proxy (much faster than browser upload)
+// If already a URL, returns it directly
+export async function uploadImageToUrl(base64Image: string): Promise<string> {
+  if (base64Image.startsWith('http://') || base64Image.startsWith('https://')) {
+    return base64Image;
+  }
+
+  const res = await fetch(`${API_URL}/api/upload-image`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataUri: base64Image }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Error subiendo imagen: ${(err as any)?.error || res.status}`);
+  }
+
+  const data = await res.json() as { url: string };
+  return data.url;
+}
 
 export async function generateThumbnail(
   baseImageBase64: string,
   prompt: string,
-  referenceImages: { data: string; mimeType: string }[] = []
+  referenceImages: { data: string; mimeType: string; tag?: string }[] = []
 ) {
-  // Use API_KEY (user selected) or GEMINI_API_KEY (default)
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-  const ai = new GoogleGenAI({ apiKey });
-  
-  const baseMimeType = baseImageBase64.split(',')[0].split(':')[1].split(';')[0];
-  const baseData = baseImageBase64.split(',')[1];
+  const kieApiKey = process.env.KIE_API_KEY;
+  if (!kieApiKey) {
+    throw new Error("Falta la clave KIE_API_KEY en el archivo .env");
+  }
 
-  const parts: any[] = [
-    {
-      inlineData: {
-        data: baseData,
-        mimeType: baseMimeType,
-      },
-    },
-  ];
-
-  // Add reference images if any
-  referenceImages.forEach((ref, index) => {
-    parts.push({
-      inlineData: {
-        data: ref.data.split(',')[1],
-        mimeType: ref.mimeType,
-      },
-    });
+  // Upload images to get URLs (kie.ai requires URLs, not base64)
+  console.log("Subiendo imágenes...");
+  const uploadPromises: Promise<string>[] = [uploadImageToUrl(baseImageBase64)];
+  referenceImages.forEach((ref) => {
+    uploadPromises.push(uploadImageToUrl(ref.data));
   });
 
-  // Text part at the end
-  parts.push({ 
-    text: `BASE IMAGE: Use the first image as the background/base for the thumbnail.
-INSTRUCTIONS: ${prompt}
-${referenceImages.length > 0 ? 'REFERENCE IMAGES: Use the subsequent images as character/object references as tagged in the prompt (@img1, @img2, etc.).' : ''}` 
+  const imageUrls = await Promise.all(uploadPromises);
+  console.log("Imágenes subidas:", imageUrls);
+
+  // Send the user's prompt directly, converting UI tags (@img1, @obj1) to @fil format
+  // In kie.ai: @fil1 = base image, @fil2 = first reference, @fil3 = second reference, etc.
+  let fullPrompt = prompt;
+  referenceImages.forEach((ref, index) => {
+    if (ref.tag) {
+      // Create a regex to replace exactly the tag globally
+      const filTag = `@fil${index + 2}`;
+      fullPrompt = fullPrompt.replace(new RegExp(ref.tag, 'g'), filTag);
+    }
   });
 
   try {
-    const response = await ai.models.generateContent({
-      model: MODELS.PRO_IMAGE,
-      contents: { parts },
-      config: {
-        imageConfig: {
-          aspectRatio: "16:9",
-          imageSize: "1K",
-        },
+    // Step 1: Create the task with Nano Banana Pro
+    const createResponse = await fetch(`${KIE_API_BASE}/api/v1/jobs/createTask`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${kieApiKey}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        model: "nano-banana-pro",
+        input: {
+          prompt: fullPrompt,
+          image_input: imageUrls,
+          aspect_ratio: "16:9",
+          resolution: "1K",
+          output_format: "png",
+        },
+      }),
     });
 
-    if (!response.candidates || response.candidates.length === 0) {
-      throw new Error("El modelo no devolvió ninguna respuesta. Esto puede deberse a filtros de seguridad o un error interno.");
+    if (!createResponse.ok) {
+      const errorData = await createResponse.json().catch(() => ({}));
+      console.error("kie.ai Create Task Error:", errorData);
+      throw new Error(`Error de kie.ai (${createResponse.status}): ${errorData?.msg || errorData?.message || createResponse.statusText}`);
     }
 
-    const candidate = response.candidates[0];
-    
-    // Handle specific finish reasons
-    if (candidate.finishReason === 'SAFETY') {
-      throw new Error("La generación fue bloqueada por los filtros de seguridad. Intenta con un prompt menos sensible o imágenes diferentes.");
+    const createData = await createResponse.json();
+    console.log("kie.ai Task Created:", createData);
+
+    if (createData.code !== 200) {
+      throw new Error(`Error de kie.ai: ${createData.msg || "Error desconocido"}`);
     }
 
-    if (candidate.finishReason === 'IMAGE_OTHER') {
-      throw new Error("Error interno de generación (IMAGE_OTHER). Esto suele ocurrir cuando el modelo no puede procesar la combinación de imágenes y prompt. Intenta simplificar las instrucciones o usar menos imágenes de referencia.");
+    // Extract taskId from response: { code: 200, data: { taskId: "..." } }
+    const taskId = createData.data?.taskId;
+    if (!taskId) {
+      const responseStr = JSON.stringify(createData).substring(0, 500);
+      throw new Error(`kie.ai respuesta inesperada (sin taskId): ${responseStr}`);
     }
 
-    if (candidate.finishReason === 'IMAGE_RECITATION') {
-      throw new Error("La generación fue bloqueada por derechos de autor (IMAGE_RECITATION). El modelo detectó una similitud excesiva con contenido protegido. Intenta cambiar ligeramente el prompt o usar una imagen base diferente.");
-    }
+    // Step 2: Poll for result (max 120 seconds)
+    const maxAttempts = 80;
+    const pollInterval = 1500; // 1.5 seconds
 
-    let modelTextResponse = "";
-    if (candidate.content?.parts) {
-      for (const part of candidate.content.parts) {
-        if (part.inlineData) {
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+      const statusResponse = await fetch(
+        `${KIE_API_BASE}/api/v1/jobs/recordInfo?taskId=${taskId}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${kieApiKey}`,
+          },
         }
-        if (part.text) {
-          modelTextResponse += part.text + " ";
-        }
+      );
+
+      if (!statusResponse.ok) continue;
+
+      const statusData = await statusResponse.json();
+      const state = statusData.data?.state;
+      console.log(`kie.ai Poll #${i + 1}: state=${state}`);
+
+      if (state === "fail") {
+        throw new Error(`La generación falló: ${statusData.data?.failMsg || "Error desconocido"}`);
       }
+
+      if (state === "success") {
+        // resultJson is a JSON string: {"resultUrls":["https://..."]}
+        const resultJsonStr = statusData.data?.resultJson;
+        if (!resultJsonStr) {
+          throw new Error("La tarea se completó pero no hay resultJson en la respuesta.");
+        }
+
+        const resultJson = JSON.parse(resultJsonStr);
+        if (resultJson.resultUrls && resultJson.resultUrls.length > 0) {
+          return resultJson.resultUrls[0];
+        }
+
+        throw new Error("La tarea se completó pero no se encontraron URLs de imagen.");
+      }
+
+      // state === "waiting" → keep polling
     }
 
-    if (modelTextResponse.trim()) {
-      throw new Error(`El modelo respondió con texto pero no generó imagen: ${modelTextResponse.trim()}`);
-    }
-
-    if (candidate.finishReason && candidate.finishReason !== 'STOP') {
-      throw new Error(`La generación falló. Razón: ${candidate.finishReason}`);
-    }
-
-    throw new Error("No se generó ninguna imagen. Intenta ajustar tu prompt.");
+    throw new Error("Timeout: La generación tardó demasiado (>2 min). Intenta de nuevo.");
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    // Re-throw with a more user-friendly message if it's a known error string
-    if (error.message?.includes('IMAGE_OTHER')) {
-       throw new Error("Error de generación (IMAGE_OTHER): El modelo tuvo problemas para procesar tu solicitud. Prueba simplificando el prompt o reduciendo el número de imágenes de referencia.");
-    }
+    console.error("kie.ai API Error:", error);
     throw error;
   }
 }
@@ -114,35 +158,90 @@ export function getYouTubeThumbnail(url: string) {
   return null;
 }
 
-export async function generateViralTitles(topic: string) {
+export async function generateViralTitles(topic: string, channelUrl: string = "", fixedWord: string = "", wordPosition: 'start' | 'end' = 'end') {
   const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
   const ai = new GoogleGenAI({ apiKey });
 
-  const systemInstruction = `Eres un experto en "Packaging" de YouTube con un enfoque humano y conversacional. 
-Tu tarea es generar 5 títulos virales basados en la masterclass, pero evitando sonar como un robot o un bot de SEO.
+  let systemInstruction = `Eres un experto en "Packaging" de YouTube con un enfoque humano y conversacional.
+Tu tarea es generar 5 títulos virales para un vídeo, aplicando las técnicas avanzadas de la Masterclass de Creación de Títulos.`;
 
-REGLAS DE ORO (Tono Humano):
-- Habla como un creador real se dirigiría a su comunidad.
-- Evita palabras excesivamente "clickbait" genéricas que suenen falsas.
-- Usa un lenguaje natural, crudo y directo.
-- El título debe sonar como algo que tú le contarías a un amigo con entusiasmo o preocupación.
+  if (channelUrl) {
+    systemInstruction += `\n\n🎯 INSTRUCCIÓN ESPECIAL Y PERSONALIZADA PARA ESTE CANAL:
+El usuario ha proporcionado su canal de YouTube (o un canal de referencia): ${channelUrl}
+POR FAVOR, USA TU ACCESO A BÚSQUEDA WEB PARA ANALIZAR ESTE CANAL.
+1. Revisa qué tipo de títulos han funcionado mejor en el pasado.
+2. Identifica el "tono" y el estilo de la audiencia (ej. ¿es educativo, de entretenimiento, sensacionalista, profesional?).
+3. Descubre qué emociones resuenan más con sus espectadores.
+4. BASÁNDOTE EN ESE ANÁLISIS, ADAPTA TUS TÍTULOS. No des títulos genéricos; haz que suenen como si pertenecieran naturalmente a los mayores éxitos de ESE canal, pero aplicando las técnicas virales descritas abajo.`;
+  }
 
-PRINCIPIOS TÉCNICOS (Masterclass):
+  systemInstruction += `\n\n⚠️ REGLA #0 — NUNCA COPIES Y PEGUES:
+- JAMÁS generes un título genérico o que suene a "copia de la copia". Cada título debe ser PIONERO en su ángulo.
+- Si un título suena a algo que ya se ha visto 100 veces en YouTube, DESCÁRTALO y busca otro ángulo.
+- El objetivo es que si un espectador ve el vídeo original Y el tuyo en el feed, NO parezcan lo mismo. Si son iguales, el espectador entrará al que ya conoce y te quedarás sin clic.
+
+📐 PRINCIPIOS TÉCNICOS:
 1. LONGITUD: Máximo 60 caracteres.
-2. SINERGIA: Debe ser una promesa emocional intrigante.
-3. GATILLOS: Curiosidad, miedo, sorpresa, urgencia.
+2. MAYÚSCULAS SELECTIVAS: Lo más importante del título va en MAYÚSCULAS. Los conectores ("que", "de", "con", "y", "un") van en minúscula. Las demás palabras llevan la primera letra en mayúscula. NUNCA todo en minúscula ni todo en mayúscula.
+   - Ejemplo correcto: "La ÚNICA Fruta que Destruye el ALZHEIMER"
+   - Ejemplo incorrecto: "la unica fruta que destruye el alzheimer" / "LA UNICA FRUTA QUE DESTRUYE EL ALZHEIMER"
+3. GATILLOS EMOCIONALES: Curiosidad, miedo, sorpresa, urgencia, exclusividad. El título debe provocar una emoción que obligue al clic.
+4. TONO HUMANO: Habla como un creador real, no como un bot de SEO. El título debe sonar como algo que le contarías a un amigo con entusiasmo o preocupación.`;
 
-PATRONES (Úsalos de forma natural):
-- MÉTODO/SECRETO: "Cómo logré X sin hacer Y" (pero que suene real).
-- RAZÓN/EXPLICACIÓN: "Por qué dejé de hacer X" o "La verdad sobre X".
-- COMPARACIÓN: "Probé X y Y, y no hay color".
-- SHOCK: "No me esperaba esto de X".
-- PREGUNTA: "¿Realmente vale la pena X?".
+  if (fixedWord) {
+    const positionText = wordPosition === 'start' ? 'AL PRINCIPIO DEL TÍTULO' : 'AL FINAL DEL TÍTULO';
+    systemInstruction += `\n\n🎯 REGLA ESTRICTA DE PALABRA FIJA:
+El usuario ha solicitado que TODOS los títulos generados obligatoriamente contengan la palabra/frase exacta: "${fixedWord}"
+Debes colocar esta palabra/frase EXACTAMENTE ${positionText} en los 5 títulos generados.
+- Ejemplo si es al inicio: "${fixedWord} Así Destruyes tu Canal"
+- Ejemplo si es al final: "Así Destruyes tu Canal ${fixedWord}"
+Asegúrate de que la gramática tenga sentido con esta palabra añadida.`;
+  }
 
-INSTRUCCIONES DE SALIDA:
-Para cada título, da una explicación corta de por qué ese ángulo conecta emocionalmente con un humano (no con un algoritmo).
+  systemInstruction += `\n\n🔧 TÉCNICAS DE REESCRITURA (aplica al menos una diferente por título):
 
-Devuelve un array JSON de objetos con "title" y "explanation".`;
+TÉCNICA 1 — CAMBIAR EL ORDEN:
+Reorganiza los elementos del título. Si normalmente pondrías "6 Frutas que Destruyen el Alzheimer — Frank Suárez", cámbialo a "Frank Suárez: Estas 6 FRUTAS Destruyen el Alzheimer" o "Destruye el ALZHEIMER con Estas 6 Frutas".
+
+TÉCNICA 2 — CREAR EXCLUSIVIDAD (Singular vs Plural):
+Si el contenido tiene un listado (6 frutas, 5 ejercicios, 10 consejos), en vez de revelar el número, usa el singular para generar mayor necesidad y exclusividad.
+- En vez de "6 Frutas que Destruyen el Alzheimer" → "La ÚNICA Fruta que Destruye el Alzheimer"
+- Esto genera más urgencia porque el espectador siente que hay UNA sola cosa que necesita saber.
+
+TÉCNICA 3 — USAR UNA AUTORIDAD RELEVANTE:
+Apalancarse de una figura de autoridad al inicio del título usando "dos puntos" para dar credibilidad inmediata. No uses siempre la misma autoridad; busca una que sea específica y relevante al tema.
+- "Neurólogo: Esta Fruta Provoca DEMENCIA Grave"
+- "Médico Cerebral: DEJA de Comer Esto"
+- "Ex-Ingeniero de Google: Así Funciona el ALGORITMO"
+
+TÉCNICA 4 — ATACAR EL ÁNGULO OPUESTO:
+En vez de hablar del beneficio, habla de lo que lo CAUSA o lo EMPEORA. Ataca el dolor contrario.
+- Original: "6 Frutas que Destruyen el Alzheimer" (beneficio)
+- Opuesto: "6 Frutas que PROVOCAN Alzheimer" (causa/dolor)
+- Esto funciona porque el miedo a perder es más fuerte que el deseo de ganar.
+
+TÉCNICA 5 — USAR SINÓNIMOS Y TÉRMINOS RELACIONADOS:
+No repitas las mismas palabras que todo el mundo usa. Busca sinónimos o conceptos relacionados que amplíen el alcance.
+- "Alzheimer" → "Demencia", "Pérdida de Memoria", "Deterioro Cognitivo"
+- "Destruye" → "Acelera", "Provoca", "Revierte", "Rejuvenece"
+- "Ganar dinero" → "Escalar ingresos", "Vivir de esto", "Monetizar"
+
+TÉCNICA 6 — COMBINAR OPUESTOS (MÁS VALOR):
+Junta lo malo y lo bueno en un solo título para aportar más valor y generar mayor curiosidad.
+- "4 Frutas que DAÑAN tu Cerebro y 4 que lo PROTEGEN de la Demencia"
+- "5 Hábitos que DESTRUYEN tu Canal y 3 que lo VIRALIZAN"
+
+TÉCNICA 7 — REMIXAR COMPETENCIA:
+Investiga qué títulos han funcionado en la competencia y mezcla elementos de diferentes títulos exitosos para crear algo nuevo y mejor. No copies, REMEZCLA.
+- Si un título usa "como médico te ruego" y otro usa "acelera la demencia", combínalos: "Como MÉDICO te Ruego: Deja Esta Fruta que Acelera la DEMENCIA"
+
+🎯 INSTRUCCIONES DE SALIDA:
+Para cada título genera:
+- "title": El título viral (máx 60 caracteres, con mayúsculas selectivas).
+- "technique": El nombre de la técnica principal aplicada (ej: "Ángulo Opuesto", "Exclusividad Singular", "Autoridad + Opuesto", "Combinar Opuestos", "Cambio de Orden", "Remix de Competencia", "Sinónimos").
+- "explanation": Una explicación concisa de por qué este ángulo conecta emocionalmente con un humano (no con un algoritmo) y por qué es diferente a lo que ya existe.
+
+Genera 5 títulos, cada uno usando una técnica DIFERENTE. Que ninguno se parezca entre sí.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -150,6 +249,7 @@ Devuelve un array JSON de objetos con "title" y "explanation".`;
       contents: `Tema del vídeo: ${topic}`,
       config: {
         systemInstruction,
+        tools: channelUrl ? [{ googleSearch: {} }] : undefined,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
@@ -157,9 +257,10 @@ Devuelve un array JSON de objetos con "title" y "explanation".`;
             type: Type.OBJECT,
             properties: {
               title: { type: Type.STRING },
+              technique: { type: Type.STRING },
               explanation: { type: Type.STRING }
             },
-            required: ["title", "explanation"]
+            required: ["title", "technique", "explanation"]
           }
         }
       },
@@ -167,7 +268,7 @@ Devuelve un array JSON de objetos con "title" y "explanation".`;
 
     const text = response.text;
     if (!text) throw new Error("No se generaron títulos");
-    return JSON.parse(text) as { title: string; explanation: string }[];
+    return { titles: JSON.parse(text) };
   } catch (error) {
     console.error("Error generating titles:", error);
     throw error;

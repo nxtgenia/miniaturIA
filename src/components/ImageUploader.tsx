@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Youtube, Upload, Link as LinkIcon, X, Image as ImageIcon } from 'lucide-react';
+import { Youtube, Upload, Link as LinkIcon, X, Image as ImageIcon, Search } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { getYouTubeThumbnail } from '../lib/gemini';
+import { API_URL } from '../lib/config';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { YouTubeSearch } from './YouTubeSearch';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,19 +13,28 @@ function cn(...inputs: ClassValue[]) {
 
 interface ImageUploaderProps {
   onImageSelected: (base64: string) => void;
+  onImageSelectedWithSource?: (base64: string, source: 'upload' | 'url' | 'search') => void;
   currentImage: string | null;
 }
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, currentImage }) => {
+type Mode = 'upload' | 'url' | 'search';
+
+export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, onImageSelectedWithSource, currentImage }) => {
   const [ytUrl, setYtUrl] = useState('');
   const [error, setError] = useState('');
+  const [activeMode, setActiveMode] = useState<Mode>('upload');
+
+  const selectImage = (base64: string, source: Mode) => {
+    onImageSelected(base64);
+    onImageSelectedWithSource?.(base64, source);
+  };
 
   const onDrop = (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        onImageSelected(reader.result as string);
+        selectImage(reader.result as string, 'upload');
       };
       reader.readAsDataURL(file);
     }
@@ -40,84 +51,123 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, c
     const thumb = getYouTubeThumbnail(ytUrl);
     if (thumb) {
       try {
-        const response = await fetch(thumb);
+        const response = await fetch(`${API_URL}/api/proxy-image?url=${encodeURIComponent(thumb)}`);
         const blob = await response.blob();
         const reader = new FileReader();
         reader.onload = () => {
-          onImageSelected(reader.result as string);
+          selectImage(reader.result as string, 'url');
           setYtUrl('');
           setError('');
         };
         reader.readAsDataURL(blob);
       } catch (err) {
-        setError('No se pudo cargar la miniatura de YouTube. Intenta subir el archivo directamente.');
+        setError('No se pudo cargar la miniatura. Intenta subir el archivo directamente.');
       }
     } else {
-      setError('URL de YouTube no válida');
+      setError('URL no válida');
     }
   };
 
+  const handleSearchSelect = async (thumbnailUrl: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/proxy-image?url=${encodeURIComponent(thumbnailUrl)}`);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.onload = () => {
+        selectImage(reader.result as string, 'search');
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error('Error procesando imagen de búsqueda', err);
+    }
+  };
+
+  const modes: { key: Mode; label: string; icon: React.ReactNode }[] = [
+    { key: 'upload', label: 'Upload', icon: <Upload className="w-3.5 h-3.5" /> },
+    { key: 'url', label: 'URL', icon: <LinkIcon className="w-3.5 h-3.5" /> },
+    { key: 'search', label: 'Buscar', icon: <Search className="w-3.5 h-3.5" /> },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="w-full">
       {!currentImage ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* File Upload */}
-          <div
-            {...getRootProps()}
-            className={cn(
-              "border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all min-h-[240px]",
-              isDragActive ? "border-red-600 bg-red-600/5" : "border-white/10 hover:border-white/20 bg-white/5"
-            )}
-          >
-            <input {...getInputProps()} />
-            <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-4">
-              <Upload className="w-6 h-6 text-zinc-400" />
-            </div>
-            <p className="text-white font-medium">Sube un archivo</p>
-            <p className="text-zinc-500 text-sm mt-1">Imagen o Video</p>
+        <div className="flex flex-col items-center gap-3 w-full">
+          {/* 3-pill mode switcher */}
+          <div className="flex bg-[#1a1a1a] p-1 rounded-full border border-[#2a2a2a]">
+            {modes.map((m) => (
+              <button
+                key={m.key}
+                onClick={() => setActiveMode(m.key)}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${activeMode === m.key
+                  ? 'bg-[#2a2a2a] text-white shadow-sm'
+                  : 'text-[#777] hover:text-white'
+                  }`}
+              >
+                {m.icon}
+                {m.label}
+              </button>
+            ))}
           </div>
 
-          {/* YouTube Link */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col justify-center min-h-[240px]">
-            <div className="w-12 h-12 bg-red-600/10 rounded-full flex items-center justify-center mb-4">
-              <Youtube className="w-6 h-6 text-red-600" />
+          {/* Upload mode */}
+          {activeMode === 'upload' && (
+            <div className="w-full">
+              <div
+                {...getRootProps()}
+                className={cn(
+                  "w-full bg-[#111] border border-dashed border-[#2a2a2a] hover:border-[#ff0000]/50 rounded-xl flex items-center justify-center cursor-pointer transition-all min-h-[56px] text-sm text-[#555]",
+                  isDragActive && "border-[#ff0000] bg-[#ff0000]/5 text-[#ff0000]"
+                )}
+              >
+                <input {...getInputProps()} />
+                <p>{isDragActive ? 'Suelta aquí...' : 'Arrastra una imagen aquí, o haz clic para buscar'}</p>
+              </div>
             </div>
-            <p className="text-white font-medium mb-4">Desde YouTube</p>
-            <form onSubmit={handleYtSubmit} className="space-y-3">
-              <div className="relative">
-                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          )}
+
+          {/* URL mode */}
+          {activeMode === 'url' && (
+            <div className="w-full">
+              <form onSubmit={handleYtSubmit} className="relative w-full">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Youtube className="h-4 w-4 text-[#555]" />
+                </div>
                 <input
                   type="text"
                   value={ytUrl}
                   onChange={(e) => setYtUrl(e.target.value)}
-                  placeholder="Pega la URL del video..."
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-red-600/50 transition-colors"
+                  placeholder="Pega el link de un video o miniatura..."
+                  className="w-full bg-[#111] border border-[#1e1e1e] focus:border-[#ff0000]/50 rounded-xl py-3 pl-10 pr-24 text-sm text-[#e4e4e7] placeholder:text-[#444] focus:outline-none transition-colors"
                 />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 bg-white text-black text-sm font-semibold rounded-xl hover:bg-zinc-200 transition-colors"
-              >
-                Cargar Miniatura
-              </button>
-              {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
-            </form>
-          </div>
+                <button type="submit" className="absolute inset-y-1.5 right-1.5 px-4 bg-[#1e1e1e] hover:bg-[#2a2a2a] text-white text-xs font-medium rounded-lg transition-colors">
+                  Cargar
+                </button>
+              </form>
+              {error && <p className="text-red-400 text-xs mt-2 text-center">{error}</p>}
+            </div>
+          )}
+
+          {/* Search mode */}
+          {activeMode === 'search' && (
+            <div className="w-full">
+              <YouTubeSearch onSelect={handleSearchSelect} />
+            </div>
+          )}
         </div>
       ) : (
-        <div className="relative group rounded-2xl overflow-hidden border border-white/10 aspect-video bg-black">
+        <div className="relative group rounded-xl overflow-hidden border border-[#1e1e1e] aspect-video bg-black">
           <img src={currentImage} alt="Base" className="w-full h-full object-contain" />
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <button
               onClick={() => onImageSelected('')}
-              className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition-colors shadow-xl"
+              className="bg-[#1e1e1e] text-white p-3 rounded-full hover:bg-red-600 transition-colors"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-red-600" />
-            <span className="text-xs font-medium text-white">Imagen Base</span>
+          <div className="absolute top-3 left-3 bg-black/80 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+            <ImageIcon className="w-3 h-3 text-[#ff0000]" />
+            <span className="text-[10px] font-semibold text-white uppercase tracking-wide">Base</span>
           </div>
         </div>
       )}

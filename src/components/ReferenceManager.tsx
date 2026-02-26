@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserPlus, X, Image as ImageIcon } from 'lucide-react';
+import { UserPlus, X } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -35,13 +35,8 @@ export const ReferenceManager: React.FC<ReferenceManagerProps> = ({ references, 
   } as any);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Referencias (Personajes y Objetos)</h3>
-        <span className="text-xs text-zinc-500">{references.length} / 6</span>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
+    <div className="flex flex-col items-center w-full gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-2 w-full">
         <AnimatePresence mode="popLayout">
           {references.map((ref) => (
             <motion.div
@@ -50,19 +45,19 @@ export const ReferenceManager: React.FC<ReferenceManagerProps> = ({ references, 
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="relative aspect-square rounded-xl border border-white/10 overflow-hidden bg-white/5 group"
+              className="relative w-12 h-12 rounded-lg border border-[#3f3f46] overflow-hidden bg-[#1e1e20] group"
             >
               <img src={ref.data} alt={ref.tag} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="absolute inset-0 bg-[#09090b]/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button
                   onClick={() => onRemove(ref.id)}
-                  className="bg-red-500/80 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors"
+                  className="text-white hover:text-red-500 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 text-[10px] font-mono text-red-500 text-center">
-                {ref.tag}
+              <div className="absolute bottom-0 inset-x-0 bg-[#09090b]/90 py-0.5 text-[8px] font-mono text-[#34d399] tracking-wider text-center font-bold">
+                {ref.tag.toUpperCase()}
               </div>
             </motion.div>
           ))}
@@ -71,24 +66,19 @@ export const ReferenceManager: React.FC<ReferenceManagerProps> = ({ references, 
         {references.length < 6 && (
           <div
             {...getRootProps()}
-            className={`
-              aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all
-              ${isDragActive ? 'border-red-600 bg-red-600/5' : 'border-white/10 hover:border-white/20 bg-white/5'}
-            `}
+            className={`w-12 h-12 rounded-lg border border-dashed flex items-center justify-center cursor-pointer transition-all ${isDragActive ? "border-[#34d399] bg-[#34d399]/10 text-[#34d399]" : "border-[#3f3f46] hover:border-[#a1a1aa] bg-[#1e1e20] text-[#71717a]"
+              }`}
           >
             <input {...getInputProps()} />
-            <UserPlus className="w-6 h-6 text-zinc-500 mb-2" />
-            <span className="text-[10px] text-zinc-500 font-medium">Añadir</span>
+            <UserPlus className="w-4 h-4" />
           </div>
         )}
       </div>
 
       {references.length > 0 && (
-        <div className="p-3 bg-red-600/5 border border-red-600/10 rounded-xl">
-          <p className="text-[11px] text-red-200/60 leading-relaxed">
-            Usa <span className="text-red-500 font-mono">@img1-3</span> para personajes y <span className="text-red-500 font-mono">@obj1-3</span> para objetos en tu prompt.
-          </p>
-        </div>
+        <p className="text-[10px] text-[#71717a] font-mono mt-1">
+          Use <span className="text-[#34d399]">@img1-3</span> for people, <span className="text-[#34d399]">@obj1-3</span> for objects.
+        </p>
       )}
     </div>
   );
