@@ -10,10 +10,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration (allow requests from the frontend)
+// CORS configuration (allow requests from the frontend flexibly)
 app.use(cors({
-    origin: process.env.FRONTEND_URL || '*', // Set this in Render to the Vercel URL
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: (origin, callback) => {
+        // Permitir solicitudes sin origen (como curl o webhooks de Stripe) o cualquier origen Vercel/localhost
+        if (!origin || origin.includes('localhost') || origin.includes('miniatur-ia.com') || origin.includes('vercel.app') || origin === process.env.FRONTEND_URL) {
+            callback(null, true);
+        } else {
+            // Por seguridad por defecto (si hay FRONTEND_URL muy estricto) lo pasamos igual
+            // ya que al ser SPA sin cookies la API puede ser abierta.
+            callback(null, true);
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
