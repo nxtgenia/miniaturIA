@@ -245,7 +245,7 @@ Genera 5 títulos, cada uno usando una técnica DIFERENTE. Que ninguno se parezc
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
       contents: `Tema del vídeo: ${topic}`,
       config: {
         systemInstruction,
