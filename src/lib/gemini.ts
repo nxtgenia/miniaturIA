@@ -244,32 +244,42 @@ Para cada título genera:
 Genera 5 títulos, cada uno usando una técnica DIFERENTE. Que ninguno se parezca entre sí.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Tema del vídeo: ${topic}`,
-      config: {
-        systemInstruction,
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: [{ role: "user", parts: [{ text: `Tema del vídeo: ${topic}` }] }],
         tools: channelUrl ? [{ googleSearch: {} }] : undefined,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              technique: { type: Type.STRING },
-              explanation: { type: Type.STRING }
-            },
-            required: ["title", "technique", "explanation"]
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                title: { type: "STRING" },
+                technique: { type: "STRING" },
+                explanation: { type: "STRING" }
+              },
+              required: ["title", "technique", "explanation"]
+            }
           }
         }
-      },
+      })
     });
 
-    const text = response.text;
-    if (!text) throw new Error("No se generaron títulos");
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(`Error de Gemini (${response.status}): ${errData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("No se generaron títulos: Respuesta vacía de la API");
+
     return { titles: JSON.parse(text) };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating titles:", error);
     throw error;
   }

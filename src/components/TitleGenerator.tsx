@@ -21,7 +21,8 @@ export const TitleGenerator: React.FC = () => {
       const result = await generateViralTitles(topic, channelUrl, fixedWord, wordPosition);
       setTitles(result.titles || []);
     } catch (err: any) {
-      setError('Error al generar títulos. Inténtalo de nuevo.');
+      console.error(err);
+      setError('Error al generar títulos: ' + (err.message || 'Inténtalo de nuevo.'));
       setTitles([]);
     } finally {
       setIsGenerating(false);
