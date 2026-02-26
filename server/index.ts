@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import ytSearch from 'yt-search';
 
 dotenv.config();
 
@@ -193,7 +194,107 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 });
 
 // JSON parser for other routes
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+
+app.get('/api/proxy-image', async (req, res) => {
+    try {
+        const imageUrl = req.query.url as string;
+        if (!imageUrl) {
+            return res.status(400).send('Missing url parameter');
+        }
+
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+            return res.status(response.status).send(`Failed to fetch image: ${response.statusText}`);
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+        res.setHeader('Content-Type', response.headers.get('content-type') || 'image/png');
+        res.setHeader('Content-Length', buffer.length.toString());
+        res.end(buffer);
+    } catch (err: any) {
+        res.status(500).send(`Proxy error: ${err.message}`);
+    }
+});
+
+app.post('/api/upload-image', async (req, res) => {
+    try {
+        const dataUri = req.body.dataUri;
+
+        if (!dataUri) {
+            return res.status(400).json({ error: 'Missing dataUri' });
+        }
+
+        if (dataUri.startsWith('http')) {
+            return res.json({ url: dataUri });
+        }
+
+        const matches = dataUri.match(/^data:(.+?);base64,(.+)$/);
+        if (!matches) {
+            return res.status(400).json({ error: 'Invalid data URI' });
+        }
+
+        const mime = matches[1];
+        const ext = mime.split('/')[1] || 'png';
+        const imageBuffer = Buffer.from(matches[2], 'base64');
+
+        const formData = new FormData();
+        const blob = new Blob([imageBuffer], { type: mime });
+        formData.append('file', blob, `image.${ext}`);
+
+        const uploadRes = await fetch('https://tmpfiles.org/api/v1/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!uploadRes.ok) {
+            throw new Error(`Upload failed: ${uploadRes.status}`);
+        }
+
+        const uploadData = await uploadRes.json() as any;
+        const url = uploadData.data?.url;
+        if (!url) throw new Error('No URL in upload response');
+
+        const directUrl = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+        res.json({ url: directUrl });
+    } catch (err: any) {
+        console.error('Upload error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/youtube-search', async (req, res) => {
+    try {
+        const query = req.query.q as string;
+        const page = parseInt(req.query.page as string || '1', 10);
+        const pageSize = 12;
+
+        if (!query) {
+            return res.status(400).json({ error: 'Missing query parameter' });
+        }
+
+        const searchQuery = page > 1 ? `${query} ${page}` : query;
+        const result = await ytSearch(searchQuery);
+
+        const allVideos = result.videos.map(v => ({
+            id: v.videoId,
+            title: v.title,
+            author: v.author.name,
+            views: v.views,
+            thumbnail: `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`,
+            url: v.url
+        }));
+
+        const start = 0;
+        const videos = allVideos.slice(start, pageSize);
+        const hasMore = allVideos.length > pageSize || page < 5;
+
+        res.json({ videos, page, hasMore, totalResults: allVideos.length });
+    } catch (err: any) {
+        console.error('YouTube Search error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Create checkout session
 app.post('/api/create-checkout-session', async (req, res) => {
