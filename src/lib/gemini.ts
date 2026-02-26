@@ -241,7 +241,8 @@ Para cada título genera:
 - "technique": El nombre de la técnica principal aplicada (ej: "Ángulo Opuesto", "Exclusividad Singular", "Autoridad + Opuesto", "Combinar Opuestos", "Cambio de Orden", "Remix de Competencia", "Sinónimos").
 - "explanation": Una explicación concisa de por qué este ángulo conecta emocionalmente con un humano (no con un algoritmo) y por qué es diferente a lo que ya existe.
 
-Genera 5 títulos, cada uno usando una técnica DIFERENTE. Que ninguno se parezca entre sí.`;
+Genera 5 títulos, cada uno usando una técnica DIFERENTE. Que ninguno se parezca entre sí.
+CRÍTICO: Devuelve tu respuesta ÚNICAMENTE como un array de objetos JSON puro. SIN formato markdown (\`\`\`json), SIN texto extra inicial o final, solo el JSON array [{},{},{}].`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -250,22 +251,7 @@ Genera 5 títulos, cada uno usando una técnica DIFERENTE. Que ninguno se parezc
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemInstruction }] },
         contents: [{ role: "user", parts: [{ text: `Tema del vídeo: ${topic}` }] }],
-        tools: channelUrl ? [{ googleSearch: {} }] : undefined,
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "ARRAY",
-            items: {
-              type: "OBJECT",
-              properties: {
-                title: { type: "STRING" },
-                technique: { type: "STRING" },
-                explanation: { type: "STRING" }
-              },
-              required: ["title", "technique", "explanation"]
-            }
-          }
-        }
+        tools: channelUrl ? [{ googleSearch: {} }] : undefined
       })
     });
 
@@ -275,8 +261,15 @@ Genera 5 títulos, cada uno usando una técnica DIFERENTE. Que ninguno se parezc
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) throw new Error("No se generaron títulos: Respuesta vacía de la API");
+
+    // Clean up potential markdown blocks if the model ignored the strict JSON rule
+    text = text.trim();
+    if (text.startsWith("```json")) text = text.substring(7);
+    else if (text.startsWith("```")) text = text.substring(3);
+    if (text.endsWith("```")) text = text.substring(0, text.length - 3);
+    text = text.trim();
 
     return { titles: JSON.parse(text) };
   } catch (error: any) {
