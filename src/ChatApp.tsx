@@ -261,6 +261,12 @@ export default function App() {
       return;
     }
 
+    let currentChatId = activeChatId;
+    if (!currentChatId) {
+      currentChatId = crypto.randomUUID();
+      setActiveChatId(currentChatId);
+    }
+
     const userMsg: ChatMessage = {
       id: Math.random().toString(36).substr(2, 9),
       type: 'user-prompt',
@@ -299,22 +305,23 @@ export default function App() {
             : m
         );
         // Auto-save to Supabase after successful generation
-        if (activeChatId) {
-          const firstPrompt = updated.find(m => m.type === 'user-prompt');
-          const title = firstPrompt?.prompt?.substring(0, 40) || 'Nuevo chat';
-          saveSessionToSupabase(activeChatId, title, updated);
-          // Update sidebar
-          setChatSessions(prev2 => {
-            const exists = prev2.find(s => s.id === activeChatId);
-            if (exists) {
-              return prev2.map(s => s.id === activeChatId
-                ? { ...s, title, messages: updated, timestamp: Date.now() }
-                : s
-              );
-            }
-            return [{ id: activeChatId!, title, messages: updated, timestamp: Date.now() }, ...prev2];
-          });
-        }
+        const firstPrompt = updated.find(m => m.type === 'user-prompt');
+        const title = firstPrompt?.prompt?.substring(0, 40) || 'Nuevo chat';
+
+        // This guarantees the first chat saves instantly from the start
+        saveSessionToSupabase(currentChatId, title, updated);
+
+        // Update sidebar
+        setChatSessions(prev2 => {
+          const exists = prev2.find(s => s.id === currentChatId);
+          if (exists) {
+            return prev2.map(s => s.id === currentChatId
+              ? { ...s, title, messages: updated, timestamp: Date.now() }
+              : s
+            );
+          }
+          return [{ id: currentChatId, title, messages: updated, timestamp: Date.now() }, ...prev2];
+        });
         return updated;
       });
     } catch (err: any) {
