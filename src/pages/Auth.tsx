@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Sparkles, Mail, Lock, User, Eye, EyeOff, ArrowRight, Chrome } from 'lucide-react';
 
 export default function Auth() {
@@ -13,14 +13,19 @@ export default function Auth() {
     const [name, setName] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+
+    const { user, loading } = useAuth();
+    if (!loading && user) {
+        return <Navigate to="/app" replace />;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setSuccessMessage('');
-        setLoading(true);
+        setSubmitting(true);
 
         if (isReset) {
             const result = await resetPassword(email);
@@ -39,7 +44,7 @@ export default function Auth() {
         } else {
             if (password.length < 6) {
                 setError('La contraseña debe tener al menos 6 caracteres');
-                setLoading(false);
+                setSubmitting(false);
                 return;
             }
             const result = await signUpWithEmail(email, password, name);
@@ -49,8 +54,10 @@ export default function Auth() {
                 setSuccessMessage('¡Cuenta creada! Revisa tu email para confirmar tu cuenta.');
             }
         }
-        setLoading(false);
+        setSubmitting(false);
     };
+
+    if (loading) return null;
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 relative overflow-hidden">
@@ -180,10 +187,10 @@ export default function Auth() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={submitting}
                             className="w-full bg-[#ff0000] hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,0,0,0.2)] hover:shadow-[0_0_30px_rgba(255,0,0,0.4)]"
                         >
-                            {loading ? (
+                            {submitting ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>

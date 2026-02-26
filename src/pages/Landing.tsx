@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Sparkles, Youtube, Layers, Type, Zap, CheckCircle2, Bot, PlayCircle, Image as ImageIcon, Download, TrendingDown, Clock, SearchX, Lock, ArrowRight, Star, ChevronDown, MessageSquare } from 'lucide-react';
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 const AppLogo = () => (
     <div className="w-8 h-8 rounded-lg bg-[#ff0000] flex items-center justify-center shrink-0">
@@ -241,6 +242,12 @@ const PricingSection = () => {
 };
 
 export default function Landing() {
+    const { user, loading } = useAuth();
+
+    if (!loading && user) {
+        return <Navigate to="/app" replace />;
+    }
+
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-[#f4f4f5] font-sans selection:bg-red-500/40 selection:text-white">
             {/* Spectacular Animated Background Effects */}
