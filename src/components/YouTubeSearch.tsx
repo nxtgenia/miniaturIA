@@ -29,7 +29,7 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({ onSelect }) => {
 
     const fetchResults = async (searchQuery: string, page: number, append: boolean) => {
         try {
-            const res = await fetch(`${API_URL} /api/youtube - search ? q = ${encodeURIComponent(searchQuery)}& page=${page} `);
+            const res = await fetch(`${API_URL}/api/youtube-search?q=${encodeURIComponent(searchQuery)}&page=${page}`);
             if (!res.ok) throw new Error('Error al buscar en YouTube');
 
             const data = await res.json();
