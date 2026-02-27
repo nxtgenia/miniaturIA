@@ -51,8 +51,8 @@ const plans = [
         monthlyImages: '40',
         annualImages: '450',
         annualSaving: '17%',
-        monthlyKey: 'basic_monthly',
-        annualKey: 'basic_annual',
+        monthlyKey: 'starter_monthly',
+        annualKey: 'starter_annual',
         popular: false,
         features: [
             'Generador de Miniaturas IA',
