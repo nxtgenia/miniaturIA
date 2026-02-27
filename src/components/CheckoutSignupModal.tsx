@@ -9,16 +9,48 @@ interface CheckoutSignupModalProps {
 }
 
 export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignupModalProps) {
-    const { signUpWithEmail } = useAuth();
+    const { signUpWithEmail, user: existingUser } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const handleStripeRedirect = async (userId: string, userEmail: string) => {
+        const response = await fetch(`${API_URL}/api/create-checkout-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                planKey,
+                userId,
+                userEmail,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            setError('Error al generar la pasarela de pago: ' + (data.error || 'Desconocido'));
+            setLoading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
+        if (existingUser) {
+            setLoading(true);
+            try {
+                await handleStripeRedirect(existingUser.id, existingUser.email || '');
+            } catch (err: any) {
+                setError('Error de conexión: ' + err.message);
+                setLoading(false);
+            }
+            return;
+        }
 
         if (password.length < 6) {
             setError('La contraseña debe tener al menos 6 caracteres');
@@ -28,7 +60,6 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
         setLoading(true);
 
         try {
-            // 1. Create the user in Supabase
             const { error: signUpErr, user } = await signUpWithEmail(email, password, name);
 
             if (signUpErr) {
@@ -43,26 +74,7 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
                 return;
             }
 
-            // 2. Immediately create Stripe checkout session with the new user's ID
-            const response = await fetch(`${API_URL}/api/create-checkout-session`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    planKey,
-                    userId: user.id,
-                    userEmail: email,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (data.url) {
-                // 3. Redirect perfectly to Stripe
-                window.location.href = data.url;
-            } else {
-                setError('Error al generar la pasarela de pago: ' + (data.error || 'Desconocido'));
-                setLoading(false);
-            }
+            await handleStripeRedirect(user.id, email);
         } catch (err: any) {
             setError('Error de conexión: ' + err.message);
             setLoading(false);
@@ -84,48 +96,60 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
 
                 <div className="relative z-10">
                     <h2 className="text-2xl font-black text-white text-center mb-2">
-                        Casi estamos
+                        {existingUser ? 'Confirmar Compra' : 'Casi estamos'}
                     </h2>
                     <p className="text-[#a1a1aa] text-center text-sm mb-8">
-                        Crea tu cuenta segura para asociar tus créditos e ir al pago.
+                        {existingUser
+                            ? `Hola ${existingUser.user_metadata?.full_name || 'de nuevo'}, vamos a Stripe para procesar tu plan.`
+                            : 'Crea tu cuenta segura para asociar tus créditos e ir al pago.'
+                        }
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="relative">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
-                            <input
-                                type="text"
-                                placeholder="Tu nombre"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-[#555] focus:outline-none focus:border-[#ff0000]/50 transition-colors text-sm"
-                                required
-                            />
-                        </div>
+                        {!existingUser ? (
+                            <>
+                                <div className="relative">
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
+                                    <input
+                                        type="text"
+                                        placeholder="Tu nombre"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-[#555] focus:outline-none focus:border-[#ff0000]/50 transition-colors text-sm"
+                                        required
+                                    />
+                                </div>
 
-                        <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
-                            <input
-                                type="email"
-                                placeholder="tu@email.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-[#555] focus:outline-none focus:border-[#ff0000]/50 transition-colors text-sm"
-                                required
-                            />
-                        </div>
+                                <div className="relative">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
+                                    <input
+                                        type="email"
+                                        placeholder="tu@email.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-[#555] focus:outline-none focus:border-[#ff0000]/50 transition-colors text-sm"
+                                        required
+                                    />
+                                </div>
 
-                        <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
-                            <input
-                                type="password"
-                                placeholder="Crea una contraseña segura"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-[#555] focus:outline-none focus:border-[#ff0000]/50 transition-colors text-sm"
-                                required
-                            />
-                        </div>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
+                                    <input
+                                        type="password"
+                                        placeholder="Crea una contraseña segura"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-[#555] focus:outline-none focus:border-[#ff0000]/50 transition-colors text-sm"
+                                        required
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-2xl p-6 text-center mb-4">
+                                <p className="text-white font-bold text-sm mb-1">{existingUser.email}</p>
+                                <p className="text-[#555] text-xs">Pago asociado a esta cuenta</p>
+                            </div>
+                        )}
 
                         {error && (
                             <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
@@ -146,7 +170,7 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
                                 </>
                             ) : (
                                 <>
-                                    Continuar al Pago Seguro
+                                    {existingUser ? 'Pagar Ahora' : 'Continuar al Pago Seguro'}
                                     <ArrowRight className="w-4 h-4" />
                                 </>
                             )}

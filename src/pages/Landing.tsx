@@ -1,4 +1,4 @@
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Sparkles, Youtube, Layers, Type, Zap, CheckCircle2, Bot, PlayCircle, Image as ImageIcon, Download, TrendingDown, Clock, SearchX, Lock, ArrowRight, Star, ChevronDown, MessageSquare } from 'lucide-react';
 import React, { useState } from 'react';
@@ -256,9 +256,7 @@ export default function Landing() {
         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    if (!loading && user && !selectedPlan) {
-        return <Navigate to="/app" replace />;
-    }
+
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-[#f4f4f5] font-sans selection:bg-red-500/40 selection:text-white">
@@ -282,16 +280,28 @@ export default function Landing() {
                     </nav>
 
                     <div className="flex items-center gap-4">
-                        <Link to="/auth" className="text-sm font-semibold text-white hover:text-[#ff0000] transition-colors hidden sm:block">
-                            Iniciar Sesión
-                        </Link>
-                        <button
-                            onClick={scrollToPricing}
-                            className="glow-btn px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            Empieza Gratis
-                        </button>
+                        {user ? (
+                            <Link
+                                to="/app"
+                                className="glow-btn px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2"
+                            >
+                                <Zap className="w-4 h-4 text-[#ff0000]" />
+                                Ir a la App
+                            </Link>
+                        ) : (
+                            <>
+                                <Link to="/auth" className="text-sm font-semibold text-white hover:text-[#ff0000] transition-colors hidden sm:block">
+                                    Iniciar Sesión
+                                </Link>
+                                <button
+                                    onClick={scrollToPricing}
+                                    className="glow-btn px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2"
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                    Empieza Gratis
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
