@@ -256,7 +256,7 @@ export default function Landing() {
         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    if (!loading && user) {
+    if (!loading && user && !selectedPlan) {
         return <Navigate to="/app" replace />;
     }
 
