@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Sparkles, Youtube, Layers, Type, Zap, CheckCircle2, Bot, PlayCircle, Image as ImageIcon, Download, TrendingDown, Clock, SearchX, Lock, ArrowRight, Star, ChevronDown, MessageSquare } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import CheckoutSignupModal from '../components/CheckoutSignupModal';
 
 const AppLogo = () => (
     <div className="w-8 h-8 rounded-lg bg-[#ff0000] flex items-center justify-center shrink-0">
@@ -50,6 +51,8 @@ const plans = [
         monthlyImages: '40',
         annualImages: '450',
         annualSaving: '17%',
+        monthlyKey: 'basic_monthly',
+        annualKey: 'basic_annual',
         popular: false,
         features: [
             'Generador de Miniaturas IA',
@@ -69,6 +72,8 @@ const plans = [
         monthlyImages: '90',
         annualImages: '900',
         annualSaving: '17%',
+        monthlyKey: 'pro_monthly',
+        annualKey: 'pro_annual',
         popular: true,
         features: [
             'Generador de Miniaturas IA',
@@ -88,6 +93,8 @@ const plans = [
         monthlyImages: '180',
         annualImages: '1.800',
         annualSaving: '17%',
+        monthlyKey: 'agency_monthly',
+        annualKey: 'agency_annual',
         popular: false,
         features: [
             'Generador de Miniaturas IA',
@@ -103,7 +110,7 @@ const plans = [
     },
 ];
 
-const PricingSection = () => {
+const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void }) => {
     const [isAnnual, setIsAnnual] = useState(false);
 
     return (
@@ -219,14 +226,14 @@ const PricingSection = () => {
                                 </div>
                             )}
 
-                            <Link to="/auth" className="block w-full">
-                                <button className={`w-full py-4 rounded-2xl font-black text-base transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 ${plan.popular
+                            <button
+                                onClick={() => onSelectPlan(isAnnual ? plan.annualKey : plan.monthlyKey)}
+                                className={`w-full py-4 rounded-2xl font-black text-base transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 ${plan.popular
                                     ? 'bg-[#ff0000] hover:bg-[#cc0000] text-white shadow-[0_0_25px_rgba(255,0,0,0.3)] hover:shadow-[0_0_35px_rgba(255,0,0,0.5)]'
                                     : 'bg-[#1e1e1e] hover:bg-[#2a2a2a] text-white border border-[#2a2a2a]'
                                     }`}>
-                                    Empezar ahora <ArrowRight className="w-4 h-4" />
-                                </button>
-                            </Link>
+                                Empezar ahora <ArrowRight className="w-4 h-4" />
+                            </button>
 
                             <div className="mt-4 flex items-center justify-center gap-3 text-[10px] text-[#555] font-medium">
                                 <div className="flex items-center gap-1"><Lock className="w-3 h-3" /> Pago seguro</div>
@@ -243,6 +250,11 @@ const PricingSection = () => {
 
 export default function Landing() {
     const { user, loading } = useAuth();
+    const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+
+    const scrollToPricing = () => {
+        document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     if (!loading && user) {
         return <Navigate to="/app" replace />;
@@ -273,13 +285,13 @@ export default function Landing() {
                         <Link to="/auth" className="text-sm font-semibold text-white hover:text-[#ff0000] transition-colors hidden sm:block">
                             Iniciar Sesión
                         </Link>
-                        <Link
-                            to="/auth"
+                        <button
+                            onClick={scrollToPricing}
                             className="glow-btn px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2"
                         >
                             <Sparkles className="w-4 h-4" />
                             Empieza Gratis
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -429,11 +441,9 @@ export default function Landing() {
                             </div>
 
                             <div className="pt-12 flex justify-center">
-                                <Link to="/auth">
-                                    <button className="bg-[#ff0000] hover:bg-[#cc0000] text-white px-8 md:px-12 py-5 rounded-2xl font-black text-lg transition-all shadow-[0_0_30px_rgba(255,0,0,0.3)] hover:shadow-[0_0_40px_rgba(255,0,0,0.5)] transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                                        ACCEDER A LA APP <ArrowRight className="w-5 h-5" />
-                                    </button>
-                                </Link>
+                                <button onClick={scrollToPricing} className="bg-[#ff0000] hover:bg-[#cc0000] text-white px-8 md:px-12 py-5 rounded-2xl font-black text-lg transition-all shadow-[0_0_30px_rgba(255,0,0,0.3)] hover:shadow-[0_0_40px_rgba(255,0,0,0.5)] transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                                    ELEGIR MI PLAN <ArrowRight className="w-5 h-5" />
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -583,7 +593,7 @@ export default function Landing() {
                 </section>
 
                 {/* PRICING - 3 TIER + TOGGLE */}
-                <PricingSection />
+                <PricingSection onSelectPlan={setSelectedPlan} />
 
                 {/* FAQ SECTION */}
                 <section className="py-32 px-6 border-y border-[#1e1e1e] bg-[#0a0a0a] relative z-10">
@@ -647,9 +657,9 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-multiply" />
                     <div className="max-w-4xl mx-auto text-center relative z-10">
                         <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight">El próximo millón de views empieza con la miniatura.</h2>
-                        <Link to="/auth" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black hover:bg-black hover:text-white rounded-full text-base font-bold transition-all transform hover:scale-105 shadow-xl">
-                            <Sparkles className="w-5 h-5" /> Entrar a MiniaturIA Gratis
-                        </Link>
+                        <button onClick={scrollToPricing} className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black hover:bg-black hover:text-white border hover:border-white rounded-full text-base font-bold transition-all transform hover:scale-105 shadow-xl">
+                            <Sparkles className="w-5 h-5" /> Entrar a MiniaturIA Hoy
+                        </button>
                     </div>
                 </section>
             </main>
@@ -671,6 +681,14 @@ export default function Landing() {
                     </div>
                 </div>
             </footer>
+
+            {/* Checkout/Signup Modal */}
+            {selectedPlan && (
+                <CheckoutSignupModal
+                    planKey={selectedPlan}
+                    onClose={() => setSelectedPlan(null)}
+                />
+            )}
         </div>
     );
 }

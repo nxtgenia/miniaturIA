@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, User, Eye, EyeOff, ArrowRight, Chrome } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome } from 'lucide-react';
 
 export default function Auth() {
-    const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+    const { signInWithGoogle, signInWithEmail, resetPassword } = useAuth();
     const navigate = useNavigate();
-    const [isLogin, setIsLogin] = useState(true);
     const [isReset, setIsReset] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [name, setName] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -34,24 +32,12 @@ export default function Auth() {
             } else {
                 setSuccessMessage('Si el correo existe, hemos enviado un enlace para restablecer la contraseña.');
             }
-        } else if (isLogin) {
+        } else {
             const result = await signInWithEmail(email, password);
             if (result.error) {
                 setError(result.error);
             } else {
                 navigate('/app');
-            }
-        } else {
-            if (password.length < 6) {
-                setError('La contraseña debe tener al menos 6 caracteres');
-                setSubmitting(false);
-                return;
-            }
-            const result = await signUpWithEmail(email, password, name);
-            if (result.error) {
-                setError(result.error);
-            } else {
-                setSuccessMessage('¡Cuenta creada! Revisa tu email para confirmar tu cuenta.');
             }
         }
         setSubmitting(false);
@@ -77,14 +63,12 @@ export default function Auth() {
                 {/* Card */}
                 <div className="bg-[#141414] border border-[#1e1e1e] rounded-3xl p-8 shadow-2xl">
                     <h1 className="text-2xl font-black text-white text-center mb-2">
-                        {isReset ? 'Recuperar Contraseña' : isLogin ? 'Bienvenido de vuelta' : 'Crea tu cuenta'}
+                        {isReset ? 'Recuperar Contraseña' : 'Bienvenido de vuelta'}
                     </h1>
                     <p className="text-[#a1a1aa] text-center text-sm mb-8">
                         {isReset
                             ? 'Te enviaremos un email con un enlace para crear una nueva contraseña.'
-                            : isLogin
-                                ? 'Inicia sesión para seguir creando miniaturas virales'
-                                : 'Empieza a generar miniaturas que explotan el CTR'
+                            : 'Inicia sesión para acceder a tu cuenta.'
                         }
                     </p>
 
@@ -110,20 +94,6 @@ export default function Auth() {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {!isLogin && (
-                            <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
-                                <input
-                                    type="text"
-                                    placeholder="Tu nombre"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-[#555] focus:outline-none focus:border-[#ff0000]/50 transition-colors text-sm"
-                                    required
-                                />
-                            </div>
-                        )}
-
                         <div className="relative">
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
                             <input
@@ -169,7 +139,7 @@ export default function Auth() {
                             </div>
                         )}
 
-                        {isLogin && !isReset && (
+                        {!isReset && (
                             <div className="text-right">
                                 <button
                                     type="button"
@@ -194,7 +164,7 @@ export default function Auth() {
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    {isReset ? 'Enviar Enlace' : isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+                                    {isReset ? 'Enviar Enlace' : 'Iniciar Sesión'}
                                     <ArrowRight className="w-4 h-4" />
                                 </>
                             )}
@@ -203,11 +173,10 @@ export default function Auth() {
 
                     {/* Toggle */}
                     <p className="text-center text-[#a1a1aa] text-sm mt-6">
-                        {isReset ? (
+                        {isReset && (
                             <button
                                 onClick={() => {
                                     setIsReset(false);
-                                    setIsLogin(true);
                                     setError('');
                                     setSuccessMessage('');
                                 }}
@@ -215,27 +184,13 @@ export default function Auth() {
                             >
                                 Volver al inicio de sesión
                             </button>
-                        ) : (
-                            <>
-                                {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}
-                                <button
-                                    onClick={() => {
-                                        setIsLogin(!isLogin);
-                                        setError('');
-                                        setSuccessMessage('');
-                                    }}
-                                    className="text-[#ff0000] font-bold hover:underline"
-                                >
-                                    {isLogin ? 'Regístrate gratis' : 'Inicia sesión'}
-                                </button>
-                            </>
                         )}
                     </p>
                 </div>
 
                 {/* Footer */}
                 <p className="text-center text-[#555] text-xs mt-6">
-                    Al continuar, aceptas nuestros <a href="#" className="underline hover:text-[#a1a1aa]">Términos</a> y <a href="#" className="underline hover:text-[#a1a1aa]">Política de Privacidad</a>
+                    Sitio seguro y encriptado.
                 </p>
             </div>
         </div>

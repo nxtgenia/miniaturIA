@@ -8,7 +8,7 @@ interface AuthContextType {
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
-    signUpWithEmail: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
+    signUpWithEmail: (email: string, password: string, name: string) => Promise<{ error: string | null; user: User | null }>;
     resetPassword: (email: string) => Promise<{ error: string | null }>;
     signOut: () => Promise<void>;
 }
@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const signUpWithEmail = async (email: string, password: string, name: string) => {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -77,11 +77,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         if (error) {
             if (error.message.includes('already registered')) {
-                return { error: 'Este email ya está registrado' };
+                return { error: 'Este email ya está registrado', user: null };
             }
-            return { error: error.message };
+            return { error: error.message, user: null };
         }
-        return { error: null };
+        return { error: null, user: data.user };
     };
 
     const resetPassword = async (email: string) => {
