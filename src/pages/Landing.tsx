@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Sparkles, Youtube, Layers, Type, Zap, CheckCircle2, Bot, PlayCircle, Image as ImageIcon, Download, TrendingDown, Clock, SearchX, Lock, ArrowRight, Star, ChevronDown, MessageSquare } from 'lucide-react';
 import React, { useState } from 'react';
@@ -114,14 +114,14 @@ const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void 
     const [isAnnual, setIsAnnual] = useState(false);
 
     return (
-        <section id="pricing" className="py-32 px-6 max-w-7xl mx-auto relative">
+        <section id="pricing" className="py-16 md:py-32 px-4 md:px-6 max-w-7xl mx-auto relative">
             <div className="text-center mb-16">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                 >
-                    <h2 className="text-3xl md:text-5xl font-black text-white mb-4">
+                    <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-4">
                         Elige tu plan y empieza a <span className="text-[#ff0000]">escalar</span> hoy
                     </h2>
                     <p className="text-[#a1a1aa] text-lg mb-10">
@@ -168,7 +168,7 @@ const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void 
                             : 'bg-[#1e1e1e]'
                             }`}
                     >
-                        <div className={`bg-[#0f0f0f] rounded-[27px] p-8 flex flex-col h-full relative ${plan.popular ? 'pt-12' : ''
+                        <div className={`bg-[#0f0f0f] rounded-[27px] p-5 sm:p-8 flex flex-col h-full relative ${plan.popular ? 'pt-12' : ''
                             }`}>
                             {plan.popular && (
                                 <div className="absolute -top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#ff0000] text-white text-[10px] font-black uppercase tracking-widest px-5 py-2 rounded-full shadow-[0_0_25px_rgba(255,0,0,0.5)]">
@@ -256,7 +256,9 @@ export default function Landing() {
         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
     };
 
-
+    if (!loading && user && !selectedPlan) {
+        return <Navigate to="/app" replace />;
+    }
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-[#f4f4f5] font-sans selection:bg-red-500/40 selection:text-white">
@@ -267,7 +269,7 @@ export default function Landing() {
 
             {/* Navbar */}
             <header className="relative z-50 border-b border-[#1e1e1e] bg-[#0a0a0a]/80 backdrop-blur-lg sticky top-0">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <AppLogo />
                         <span className="text-xl font-extrabold tracking-tight text-white">MiniaturIA</span>
@@ -308,7 +310,8 @@ export default function Landing() {
 
             <main className="relative z-10 w-full overflow-hidden">
                 {/* HERO SECTION */}
-                <section className="pt-24 pb-32 px-6 relative max-w-7xl mx-auto flex flex-col items-center text-center">
+                <section className="pt-20 pb-24 md:pt-24 md:pb-32 px-4 md:px-6 relative max-w-7xl mx-auto flex flex-col items-center text-center">
+
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -322,7 +325,7 @@ export default function Landing() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.1 }}
-                        className="text-5xl md:text-6xl lg:text-[4.5rem] xl:text-[5rem] font-black text-white tracking-tight w-full max-w-[1400px] leading-[1.05] mb-8"
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] xl:text-[5rem] font-black text-white tracking-tight w-full max-w-[1400px] leading-[1.1] md:leading-[1.05] mb-6 md:mb-8"
                     >
                         Generar miniaturas virales <br className="hidden md:block" /> en menos de <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff0000] to-[#f87171]">30 segundos</span>
                     </motion.h1>
@@ -405,8 +408,8 @@ export default function Landing() {
                 </section>
 
                 {/* THE LETTER (Problem & Paradigm Shift - Techain Style) */}
-                <section className="py-24 px-6 max-w-4xl mx-auto relative mt-10">
-                    <div className="bg-[#f2f2f2] rounded-[32px] p-8 md:p-16 text-black relative overflow-hidden shadow-[0_0_50px_rgba(255,0,0,0.1)]">
+                <section className="py-16 md:py-24 px-4 md:px-6 max-w-4xl mx-auto relative mt-10">
+                    <div className="bg-[#f2f2f2] rounded-[24px] md:rounded-[32px] p-6 md:p-16 text-black relative overflow-hidden shadow-[0_0_50px_rgba(255,0,0,0.1)]">
 
                         {/* Header letter */}
                         <div className="flex items-center gap-4 mb-10 pb-10 border-b border-black/10">
@@ -460,9 +463,9 @@ export default function Landing() {
                 </section>
 
                 {/* FEATURES */}
-                <section id="features" className="py-32 px-6 max-w-7xl mx-auto">
+                <section id="features" className="py-16 md:py-32 px-4 md:px-6 max-w-7xl mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-5xl font-black text-white mb-6">El <span className="text-[#ff0000]">Arsenal</span> Completo</h2>
+                        <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-6">El <span className="text-[#ff0000]">Arsenal</span> Completo</h2>
                         <p className="text-[#a1a1aa] max-w-2xl mx-auto">Todo lo que necesitas para que tu canal explote, en un solo lugar.</p>
                     </div>
 
@@ -500,10 +503,10 @@ export default function Landing() {
                 </section>
 
                 {/* HOW IT WORKS */}
-                <section id="how-it-works" className="py-32 px-6 bg-[#111] border-y border-[#1e1e1e]">
+                <section id="how-it-works" className="py-16 md:py-32 px-4 md:px-6 bg-[#111] border-y border-[#1e1e1e]">
                     <div className="max-w-7xl mx-auto">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-5xl font-black text-white mb-6">Tu Miniatura en <span className="text-[#ff0000]">3 Pasos</span></h2>
+                            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-6">Tu Miniatura en <span className="text-[#ff0000]">3 Pasos</span></h2>
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-8 relative">
@@ -540,7 +543,7 @@ export default function Landing() {
                 </section>
 
                 {/* TESTIMONIALS (WALL OF LOVE) */}
-                <section className="py-32 px-6 max-w-7xl mx-auto relative">
+                <section className="py-16 md:py-32 px-4 md:px-6 max-w-7xl mx-auto relative">
                     <div className="text-center mb-16 relative z-10">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -550,7 +553,7 @@ export default function Landing() {
                         >
                             <Star className="w-4 h-4 fill-current" /> CASOS DE ÉXITO
                         </motion.div>
-                        <h2 className="text-3xl md:text-5xl font-black text-white mb-6">Canales que ya la están <span className="text-[#ff0000]">rompiendo</span></h2>
+                        <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-6">Canales que ya la están <span className="text-[#ff0000]">rompiendo</span></h2>
                         <p className="text-[#a1a1aa] max-w-2xl mx-auto text-lg">No lo decimos nosotros. Lo dicen los CTR de los creadores que ya usan MiniaturIA.</p>
                     </div>
 
@@ -606,7 +609,7 @@ export default function Landing() {
                 <PricingSection onSelectPlan={setSelectedPlan} />
 
                 {/* FAQ SECTION */}
-                <section className="py-32 px-6 border-y border-[#1e1e1e] bg-[#0a0a0a] relative z-10">
+                <section className="py-16 md:py-32 px-4 md:px-6 border-y border-[#1e1e1e] bg-[#0a0a0a] relative z-10">
                     <div className="max-w-3xl mx-auto">
                         <div className="text-center mb-16 relative">
                             <motion.div
@@ -617,7 +620,7 @@ export default function Landing() {
                             >
                                 <MessageSquare className="w-4 h-4 fill-current" /> DUDAS SOLUCIONADAS
                             </motion.div>
-                            <h2 className="text-3xl md:text-5xl font-black text-white mb-6">Preguntas <span className="text-[#ff0000]">Frecuentes</span></h2>
+                            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-6">Preguntas <span className="text-[#ff0000]">Frecuentes</span></h2>
                             <p className="text-[#a1a1aa] text-lg">Resolvemos tus dudas antes de que des el salto al próximo nivel.</p>
                         </div>
 

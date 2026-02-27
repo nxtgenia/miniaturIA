@@ -83,7 +83,7 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
 
     return (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-[#141414] border border-[#1e1e1e] rounded-3xl w-full max-w-md p-8 relative overflow-hidden shadow-2xl">
+            <div className="bg-[#141414] border border-[#1e1e1e] rounded-3xl w-full max-w-md p-6 sm:p-8 relative overflow-hidden shadow-2xl">
                 {/* Background glow */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-[#ff0000]/10 rounded-full blur-[80px]" />
 

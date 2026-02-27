@@ -75,6 +75,20 @@ export default function App() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Close sidebar on mobile by default and handle resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // ===== SUPABASE: Sanitize messages for storage (strip base64, skip loading) =====
   const sanitizeMessages = (msgs: ChatMessage[]): ChatMessage[] => {
     return msgs
@@ -421,7 +435,7 @@ export default function App() {
         {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
 
         {/* ===== SIDEBAR ===== */}
-        <aside className={`sidebar shrink-0 h-full bg-[#111111] border-r border-[#1e1e1e] flex flex-col z-50 ${sidebarOpen ? 'w-[260px]' : 'w-0 overflow-hidden'}`}>
+        <aside className={`sidebar shrink-0 h-full bg-[#111111] border-r border-[#1e1e1e] flex flex-col z-[60] absolute md:relative transition-all duration-300 ${sidebarOpen ? 'w-[280px] left-0' : 'w-0 -left-[280px] md:left-0 md:w-0 overflow-hidden'}`}>
           {/* Sidebar top */}
           <div className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-[#1e1e1e]">
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -434,6 +448,7 @@ export default function App() {
               <ChevronLeft className="w-4 h-4" />
             </button>
           </div>
+
 
           {/* New chat button */}
           <div className="px-3 py-3">
@@ -507,7 +522,7 @@ export default function App() {
 
           {/* ===== HEADER ===== */}
           <header className="shrink-0 z-40 pt-3 pb-2.5 border-b border-[#1a1a1a]/80">
-            <div className="max-w-5xl mx-auto px-5 flex items-center justify-between">
+            <div className="max-w-5xl mx-auto px-3 sm:px-5 flex items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 {!sidebarOpen && (
                   <button onClick={() => setSidebarOpen(true)} className="text-[#666] hover:text-white transition-colors p-1 -ml-1">
@@ -825,6 +840,19 @@ export default function App() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Mobile sidebar overlay */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 bg-black/60 z-50 md:hidden backdrop-blur-sm"
+            />
+          )}
+        </AnimatePresence>
       </div>
     </ApiKeyGuard>
   );

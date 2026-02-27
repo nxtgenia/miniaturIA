@@ -25,7 +25,7 @@ const subscriptionPlans = [
 
 const Paywall: React.FC<PaywallProps> = ({ onClose }) => {
     const { credits, plan } = useCredits();
-    const { user } = useAuth();
+    const { user, signOut } = useAuth();
     const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
     const hasSubscription = plan !== 'free';
 
@@ -193,6 +193,13 @@ const Paywall: React.FC<PaywallProps> = ({ onClose }) => {
                         >
                             Volver a la web principal
                         </Link>
+
+                        <button
+                            onClick={() => signOut()}
+                            className="text-[#ff0000]/60 hover:text-[#ff0000] text-xs transition-colors"
+                        >
+                            Cerrar Sesión
+                        </button>
                     </div>
 
                     {/* Upgrade hint for subscribers */}
