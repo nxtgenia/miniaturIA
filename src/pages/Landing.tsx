@@ -290,7 +290,7 @@ export default function Landing() {
                             </Link>
                         ) : (
                             <>
-                                <Link to="/auth" className="text-sm font-semibold text-white hover:text-[#ff0000] transition-colors hidden sm:block">
+                                <Link to="/auth" className="text-sm font-semibold text-white hover:text-[#ff0000] transition-colors">
                                     Iniciar Sesión
                                 </Link>
                                 <button
