@@ -256,10 +256,6 @@ export default function Landing() {
         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    if (!loading && user && !selectedPlan) {
-        return <Navigate to="/app" replace />;
-    }
-
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-[#f4f4f5] font-sans selection:bg-red-500/40 selection:text-white">
             {/* Spectacular Animated Background Effects */}
