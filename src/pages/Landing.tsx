@@ -295,7 +295,7 @@ export default function Landing() {
                                 </Link>
                                 <button
                                     onClick={scrollToPricing}
-                                    className="glow-btn px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2"
+                                    className="glow-btn px-5 py-2.5 rounded-full text-sm font-bold items-center gap-2 hidden sm:flex"
                                 >
                                     <Sparkles className="w-4 h-4" />
                                     Empezar Ahora
