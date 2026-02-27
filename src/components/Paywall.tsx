@@ -176,15 +176,24 @@ const Paywall: React.FC<PaywallProps> = ({ onClose }) => {
                         </div>
                     )}
 
-                    {/* Dismiss */}
-                    {onClose && credits > 0 && (
-                        <button
-                            onClick={onClose}
-                            className="mt-4 text-[#555] hover:text-white text-sm transition-colors"
+                    {/* Dismiss or Return to Home */}
+                    <div className="mt-6 flex flex-col items-center gap-4">
+                        {onClose && credits > 0 && (
+                            <button
+                                onClick={onClose}
+                                className="text-[#555] hover:text-white text-sm transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                        )}
+
+                        <Link
+                            to="/"
+                            className="text-[#444] hover:text-[#ff0000] text-xs transition-colors underline underline-offset-4"
                         >
-                            Cerrar
-                        </button>
-                    )}
+                            Volver a la web principal
+                        </Link>
+                    </div>
 
                     {/* Upgrade hint for subscribers */}
                     {hasSubscription && (

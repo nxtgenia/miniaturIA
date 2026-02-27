@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { Sparkles, Download, RefreshCw, Layers, Info, Type, Image as ImageIcon, UserPlus, X, Plus, Settings, MessageCircle, BookOpen, Menu, ChevronLeft, LogOut, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ApiKeyGuard } from './components/ApiKeyGuard';
@@ -423,12 +424,12 @@ export default function App() {
         <aside className={`sidebar shrink-0 h-full bg-[#111111] border-r border-[#1e1e1e] flex flex-col z-50 ${sidebarOpen ? 'w-[260px]' : 'w-0 overflow-hidden'}`}>
           {/* Sidebar top */}
           <div className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-[#1e1e1e]">
-            <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-7 h-7 rounded-lg bg-[#ff0000] flex items-center justify-center">
                 <span className="text-[10px] font-black text-white tracking-tight">IA</span>
               </div>
               <span className="text-sm font-bold text-white">MiniaturIA</span>
-            </div>
+            </Link>
             <button onClick={() => setSidebarOpen(false)} className="text-[#666] hover:text-white transition-colors p-1">
               <ChevronLeft className="w-4 h-4" />
             </button>
