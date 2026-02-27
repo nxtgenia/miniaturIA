@@ -9,7 +9,7 @@ interface CheckoutSignupModalProps {
 }
 
 export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignupModalProps) {
-    const { signUpWithEmail, user: existingUser } = useAuth();
+    const { signUpWithEmail, signOut, user: existingUser } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -145,9 +145,18 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
                                 </div>
                             </>
                         ) : (
-                            <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-2xl p-6 text-center mb-4">
-                                <p className="text-white font-bold text-sm mb-1">{existingUser.email}</p>
-                                <p className="text-[#555] text-xs">Pago asociado a esta cuenta</p>
+                            <div className="space-y-4">
+                                <div className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-2xl p-6 text-center">
+                                    <p className="text-white font-bold text-sm mb-1">{existingUser.email}</p>
+                                    <p className="text-[#555] text-xs">Pago asociado a esta cuenta</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => signOut()}
+                                    className="w-full text-[#555] hover:text-[#ff0000] text-xs transition-colors py-2"
+                                >
+                                    ¿Quieres usar otra cuenta? Cerrar sesión
+                                </button>
                             </div>
                         )}
 
