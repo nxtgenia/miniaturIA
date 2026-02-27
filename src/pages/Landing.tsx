@@ -298,7 +298,7 @@ export default function Landing() {
                                     className="glow-btn px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2"
                                 >
                                     <Sparkles className="w-4 h-4" />
-                                    Empieza Gratis
+                                    Empezar Ahora
                                 </button>
                             </>
                         )}
