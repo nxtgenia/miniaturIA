@@ -506,7 +506,7 @@ export default function App() {
             <a href="#" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] text-[#777] hover:text-white hover:bg-[#1a1a1a] transition-colors">
               <BookOpen className="w-3.5 h-3.5" /> Tutoriales
             </a>
-            <a href="https://chat.whatsapp.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] text-[#777] hover:text-[#25D366] hover:bg-[#25D366]/10 transition-colors">
+            <a href="https://chat.whatsapp.com/HkgcVjQA8UY3RiVboNWU8A?mode=hq2tcli" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] text-[#777] hover:text-[#25D366] hover:bg-[#25D366]/10 transition-colors">
               <MessageCircle className="w-3.5 h-3.5" /> Comunidad WhatsApp
             </a>
             <button
