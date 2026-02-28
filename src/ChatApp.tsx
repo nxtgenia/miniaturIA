@@ -77,14 +77,21 @@ export default function App() {
 
   // Close sidebar on mobile by default and handle resize
   useEffect(() => {
+    let lastWidth = window.innerWidth;
     const handleResize = () => {
-      if (window.innerWidth < 768) {
+      // Only set status if we crossed the 768px breakpoint
+      // This prevents the menu from closing when the mobile browser hides/shows the address bar
+      if (window.innerWidth < 768 && lastWidth >= 768) {
         setSidebarOpen(false);
-      } else {
+      } else if (window.innerWidth >= 768 && lastWidth < 768) {
         setSidebarOpen(true);
       }
+      lastWidth = window.innerWidth;
     };
-    handleResize(); // Initial check
+
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -425,7 +432,7 @@ export default function App() {
 
   return (
     <ApiKeyGuard>
-      <div className="h-screen relative text-[#e4e4e7] font-sans flex overflow-hidden bg-[#0a0a0a]">
+      <div className="h-[100dvh] relative text-[#e4e4e7] font-sans flex overflow-hidden bg-[#0a0a0a]">
         {/* Paywall modal */}
         {(showPaywall || isForcePaywall) && (
           <Paywall onClose={isForcePaywall ? undefined : () => setShowPaywall(false)} />
