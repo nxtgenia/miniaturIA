@@ -17,9 +17,7 @@ app.use(cors({
         if (!origin || origin.includes('localhost') || origin.includes('miniatur-ia.com') || origin.includes('vercel.app') || origin === process.env.FRONTEND_URL) {
             callback(null, true);
         } else {
-            // Por seguridad por defecto (si hay FRONTEND_URL muy estricto) lo pasamos igual
-            // ya que al ser SPA sin cookies la API puede ser abierta.
-            callback(null, true);
+            callback(new Error('Not allowed by CORS'));
         }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -212,6 +210,20 @@ app.get('/api/proxy-image', async (req, res) => {
             return res.status(400).send('Missing url parameter');
         }
 
+        if (!imageUrl.startsWith('https://')) {
+            return res.status(400).send('Only HTTPS URLs are allowed');
+        }
+
+        try {
+            const urlObj = new URL(imageUrl);
+            const allowedDomains = ['tmpfiles.org', 'img.youtube.com', 'i.ytimg.com', 'googleapis.com'];
+            if (!allowedDomains.some(d => urlObj.hostname.endsWith(d))) {
+                return res.status(403).send('Domain not allowed');
+            }
+        } catch (e) {
+            return res.status(400).send('Invalid URL');
+        }
+
         const response = await fetch(imageUrl);
         if (!response.ok) {
             return res.status(response.status).send(`Failed to fetch image: ${response.statusText}`);
@@ -305,12 +317,35 @@ app.get('/api/youtube-search', async (req, res) => {
     }
 });
 
+// Middleware to verify Supabase Auth token
+const authenticateUser = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+
+    if (error || !user) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    }
+
+    (req as any).user = user;
+    next();
+};
+
 // Create checkout session
-app.post('/api/create-checkout-session', async (req, res) => {
+app.post('/api/create-checkout-session', authenticateUser, async (req, res) => {
     const { planKey, userId, userEmail, successUrl, cancelUrl } = req.body;
 
     if (!planKey || !userId) {
         return res.status(400).json({ error: 'Missing planKey or userId' });
+    }
+
+    // Ensure the authenticated user matches the requested user
+    if ((req as any).user.id !== userId) {
+        return res.status(403).json({ error: 'Forbidden: userId mismatch' });
     }
 
     const priceId = stripePriceIds[planKey];
@@ -377,8 +412,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
 });
 
 // Get user's subscription status
-app.get('/api/subscription-status/:userId', async (req, res) => {
+app.get('/api/subscription-status/:userId', authenticateUser, async (req, res) => {
     const { userId } = req.params;
+
+    if ((req as any).user.id !== userId) {
+        return res.status(403).json({ error: 'Forbidden: userId mismatch' });
+    }
 
     const { data: profile } = await supabaseAdmin
         .from('profiles')
@@ -394,8 +433,12 @@ app.get('/api/subscription-status/:userId', async (req, res) => {
 });
 
 // Customer portal (manage subscription)
-app.post('/api/customer-portal', async (req, res) => {
+app.post('/api/customer-portal', authenticateUser, async (req, res) => {
     const { userId } = req.body;
+
+    if ((req as any).user.id !== userId) {
+        return res.status(403).json({ error: 'Forbidden: userId mismatch' });
+    }
 
     const { data: profile } = await supabaseAdmin
         .from('profiles')

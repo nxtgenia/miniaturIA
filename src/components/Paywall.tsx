@@ -25,18 +25,21 @@ const subscriptionPlans = [
 
 const Paywall: React.FC<PaywallProps> = ({ onClose }) => {
     const { credits, plan } = useCredits();
-    const { user, signOut } = useAuth();
+    const { user, signOut, session } = useAuth();
     const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
     const hasSubscription = plan !== 'free';
 
     const handleCheckout = async (planKey: string) => {
-        if (!user) return;
+        if (!user || !session?.access_token) return;
         setLoadingPlan(planKey);
 
         try {
             const response = await fetch(`${API_URL}/api/create-checkout-session`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({
                     planKey,
                     userId: user.id,

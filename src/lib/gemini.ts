@@ -31,7 +31,7 @@ export async function generateThumbnail(
   prompt: string,
   referenceImages: { data: string; mimeType: string; tag?: string }[] = []
 ) {
-  const kieApiKey = import.meta.env.VITE_KIE_API_KEY || "829cd2d2053471505b30f196c5d5cc61";
+  const kieApiKey = import.meta.env.VITE_KIE_API_KEY;
   if (!kieApiKey) {
     throw new Error("Falta la clave VITE_KIE_API_KEY");
   }

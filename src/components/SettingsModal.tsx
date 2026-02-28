@@ -10,7 +10,7 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
-    const { user, signOut } = useAuth();
+    const { user, signOut, session } = useAuth();
     const { plan, credits } = useCredits();
 
     const [activeTab, setActiveTab] = useState<'profile' | 'billing'>('profile');
@@ -54,11 +54,15 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     };
 
     const handleCustomerPortal = async () => {
+        if (!session?.access_token) return;
         setBillingLoading(true);
         try {
             const response = await fetch(`${API_URL}/api/customer-portal`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({ userId: user?.id })
             });
             const data = await response.json();

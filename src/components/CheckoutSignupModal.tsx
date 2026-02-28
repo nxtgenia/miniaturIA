@@ -9,7 +9,7 @@ interface CheckoutSignupModalProps {
 }
 
 export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignupModalProps) {
-    const { signUpWithEmail, signOut, user: existingUser } = useAuth();
+    const { signUpWithEmail, signOut, user: existingUser, session } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,9 +17,19 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
     const [error, setError] = useState<string | null>(null);
 
     const handleStripeRedirect = async (userId: string, userEmail: string) => {
+        const token = session?.access_token;
+        if (!token) {
+            setError('Error: no hay sesión activa.');
+            setLoading(false);
+            return;
+        }
+
         const response = await fetch(`${API_URL}/api/create-checkout-session`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
                 planKey,
                 userId,
