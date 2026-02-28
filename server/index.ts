@@ -382,8 +382,8 @@ app.post('/api/generate-thumbnail', authenticateUser, async (req, res) => {
         }
 
         // We can poll here on the server
-        const maxAttempts = 80;
-        const pollInterval = 1500;
+        const maxAttempts = 120; // Increase max attempts to handle longer generations
+        const pollInterval = 2000; // Increase poll interval to 2 seconds
 
         for (let i = 0; i < maxAttempts; i++) {
             await new Promise(resolve => setTimeout(resolve, pollInterval));
