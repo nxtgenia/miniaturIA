@@ -370,7 +370,7 @@ app.post('/api/generate-thumbnail', authenticateUser, async (req, res) => {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: "nano-banana-pro",
+                model: "nano-banana-2",
                 input: {
                     prompt: fullPrompt,
                     image_input: imageUrls,
