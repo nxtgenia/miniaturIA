@@ -232,7 +232,7 @@ app.get('/api/proxy-image', async (req, res) => {
 
         try {
             const urlObj = new URL(imageUrl);
-            const allowedDomains = ['tmpfiles.org', 'img.youtube.com', 'i.ytimg.com', 'googleapis.com'];
+            const allowedDomains = ['tmpfiles.org', 'img.youtube.com', 'i.ytimg.com', 'googleapis.com', 'catbox.moe', 'aiquickdraw.com'];
             if (!allowedDomains.some(d => urlObj.hostname.endsWith(d))) {
                 return res.status(403).send('Domain not allowed');
             }
