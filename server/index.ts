@@ -203,6 +203,22 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 // JSON parser for other routes
 app.use(express.json({ limit: '50mb' }));
 
+// Memory cache for proxying images to Kie.ai
+const imageCache = new Map<string, { buffer: Buffer, mime: string, expires: number }>();
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of imageCache.entries()) {
+        if (now > value.expires) imageCache.delete(key);
+    }
+}, 60000); // Cleanup every minute
+
+app.get('/api/cached-image/:id', (req, res) => {
+    const img = imageCache.get(req.params.id);
+    if (!img) return res.status(404).send('Not found or expired');
+    res.setHeader('Content-Type', img.mime);
+    res.send(img.buffer);
+});
+
 app.get('/api/proxy-image', async (req, res) => {
     try {
         const imageUrl = req.query.url as string;
@@ -261,9 +277,10 @@ app.post('/api/upload-image', async (req, res) => {
 
         const formData = new FormData();
         const blob = new Blob([imageBuffer], { type: mime });
-        formData.append('file', blob, `image.${ext}`);
+        formData.append('reqtype', 'fileupload');
+        formData.append('fileToUpload', blob, `image.${ext}`);
 
-        const uploadRes = await fetch('https://tmpfiles.org/api/v1/upload', {
+        const uploadRes = await fetch('https://catbox.moe/user/api.php', {
             method: 'POST',
             body: formData,
         });
@@ -272,12 +289,10 @@ app.post('/api/upload-image', async (req, res) => {
             throw new Error(`Upload failed: ${uploadRes.status}`);
         }
 
-        const uploadData = await uploadRes.json() as any;
-        const url = uploadData.data?.url;
-        if (!url) throw new Error('No URL in upload response');
+        const url = await uploadRes.text();
+        if (!url || !url.startsWith('https://')) throw new Error('No URL in upload response');
 
-        const directUrl = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-        res.json({ url: directUrl });
+        res.json({ url });
     } catch (err: any) {
         console.error('Upload error:', err);
         res.status(500).json({ error: err.message });
