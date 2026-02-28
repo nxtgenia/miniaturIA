@@ -660,7 +660,7 @@ export default function App() {
                               <div className="bg-[#141414] border border-[#1e1e1e] rounded-2xl rounded-bl-md overflow-hidden">
                                 <div className="relative">
                                   <img
-                                    src={msg.image}
+                                    src={`${API_URL}/api/proxy-image?url=${encodeURIComponent(msg.image!)}`}
                                     alt="Resultado"
                                     className="w-full aspect-video object-contain bg-black"
                                   />
@@ -712,7 +712,7 @@ export default function App() {
                       {/* Base image indicator */}
                       {baseImage && (
                         <div className="flex items-center gap-2 bg-[#141414] border border-[#1e1e1e] rounded-full pl-1 pr-3 py-1">
-                          <img src={baseImage} alt="Base" className="w-6 h-6 rounded-full object-cover" />
+                          <img src={baseImage?.startsWith('http') ? `${API_URL}/api/proxy-image?url=${encodeURIComponent(baseImage)}` : baseImage} alt="Base" className="w-6 h-6 rounded-full object-cover" />
                           <span className="text-[11px] font-medium text-[#888]">Base</span>
                           <button onClick={handleClearBase} className="text-[#555] hover:text-red-400 transition-colors">
                             <X className="w-3 h-3" />

@@ -2,6 +2,7 @@ import React from 'react';
 import { UserPlus, X } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_URL } from '../lib/config';
 
 interface ReferenceImage {
   id: string;
@@ -47,7 +48,7 @@ export const ReferenceManager: React.FC<ReferenceManagerProps> = ({ references, 
               exit={{ opacity: 0, scale: 0.8 }}
               className="relative w-12 h-12 rounded-lg border border-[#3f3f46] overflow-hidden bg-[#1e1e20] group"
             >
-              <img src={ref.data} alt={ref.tag} className="w-full h-full object-cover" />
+              <img src={ref.data?.startsWith('http') ? `${API_URL}/api/proxy-image?url=${encodeURIComponent(ref.data)}` : ref.data} alt={ref.tag} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-[#09090b]/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button
                   onClick={() => onRemove(ref.id)}

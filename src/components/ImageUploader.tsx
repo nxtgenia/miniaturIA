@@ -156,7 +156,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, o
         </div>
       ) : (
         <div className="relative group rounded-xl overflow-hidden border border-[#1e1e1e] aspect-video bg-black">
-          <img src={currentImage} alt="Base" className="w-full h-full object-contain" />
+          <img src={currentImage?.startsWith('http') ? `${API_URL}/api/proxy-image?url=${encodeURIComponent(currentImage)}` : currentImage} alt="Base" className="w-full h-full object-contain" />
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <button
               onClick={() => onImageSelected('')}
