@@ -14,6 +14,7 @@ import { API_URL } from './lib/config';
 import CreditsBadge from './components/CreditsBadge';
 import Paywall from './components/Paywall';
 import SettingsModal from './components/SettingsModal';
+import { TutorialsModal } from './components/TutorialsModal';
 
 interface ReferenceImage {
   id: string;
@@ -59,6 +60,7 @@ export default function App() {
   const { user, signOut } = useAuth();
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTutorials, setShowTutorials] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('thumbnails');
   const [baseImage, setBaseImage] = useState<string | null>(null);
   const [references, setReferences] = useState<ReferenceImage[]>([]);
@@ -441,6 +443,9 @@ export default function App() {
         {/* Settings modal */}
         {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
 
+        {/* Tutorials modal */}
+        {showTutorials && <TutorialsModal onClose={() => setShowTutorials(false)} />}
+
         {/* ===== SIDEBAR ===== */}
         <aside className={`sidebar shrink-0 h-full bg-[#111111] border-r border-[#1e1e1e] flex flex-col z-[60] absolute md:relative transition-all duration-300 ${sidebarOpen ? 'w-[280px] left-0' : 'w-0 -left-[280px] md:left-0 md:w-0 overflow-hidden'}`}>
           {/* Sidebar top */}
@@ -503,9 +508,9 @@ export default function App() {
 
           {/* Sidebar bottom links */}
           <div className="border-t border-[#1e1e1e] px-3 py-3 space-y-1">
-            <a href="#" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] text-[#777] hover:text-white hover:bg-[#1a1a1a] transition-colors">
+            <button onClick={() => setShowTutorials(true)} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] text-[#777] hover:text-white hover:bg-[#1a1a1a] transition-colors">
               <BookOpen className="w-3.5 h-3.5" /> Tutoriales
-            </a>
+            </button>
             <a href="https://chat.whatsapp.com/HkgcVjQA8UY3RiVboNWU8A?mode=hq2tcli" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] text-[#777] hover:text-[#25D366] hover:bg-[#25D366]/10 transition-colors">
               <MessageCircle className="w-3.5 h-3.5" /> Comunidad WhatsApp
             </a>
