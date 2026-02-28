@@ -335,6 +335,92 @@ const authenticateUser = async (req: express.Request, res: express.Response, nex
     next();
 };
 
+app.post('/api/generate-thumbnail', authenticateUser, async (req, res) => {
+    try {
+        const { fullPrompt, imageUrls } = req.body;
+        const kieApiKey = process.env.KIE_API_KEY || process.env.VITE_KIE_API_KEY;
+        const KIE_API_BASE = "https://api.kie.ai";
+
+        if (!kieApiKey) {
+            return res.status(500).json({ error: 'KIE_API_KEY is not configured on the server' });
+        }
+        if (!fullPrompt || !imageUrls || !Array.isArray(imageUrls)) {
+            return res.status(400).json({ error: 'Missing fullPrompt or imageUrls' });
+        }
+
+        const createResponse = await fetch(`${KIE_API_BASE}/api/v1/jobs/createTask`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${kieApiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "nano-banana-pro",
+                input: {
+                    prompt: fullPrompt,
+                    image_input: imageUrls,
+                    aspect_ratio: "16:9",
+                    resolution: "1K",
+                    output_format: "png",
+                },
+            }),
+        });
+
+        if (!createResponse.ok) {
+            const errorData = await createResponse.json().catch(() => ({}));
+            throw new Error(`Kie.ai error (${createResponse.status}): ${errorData?.msg || createResponse.statusText}`);
+        }
+
+        const createData = await createResponse.json();
+        if (createData.code !== 200) {
+            throw new Error(`Kie.ai error: ${createData.msg || "Unknown error"}`);
+        }
+
+        const taskId = createData.data?.taskId;
+        if (!taskId) {
+            throw new Error("Kie.ai response missing taskId");
+        }
+
+        // We can poll here on the server
+        const maxAttempts = 80;
+        const pollInterval = 1500;
+
+        for (let i = 0; i < maxAttempts; i++) {
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+            const statusResponse = await fetch(
+                `${KIE_API_BASE}/api/v1/jobs/recordInfo?taskId=${taskId}`,
+                { headers: { "Authorization": `Bearer ${kieApiKey}` } }
+            );
+
+            if (!statusResponse.ok) continue;
+
+            const statusData = await statusResponse.json();
+            const state = statusData.data?.state;
+
+            if (state === "fail") {
+                throw new Error(`Generation failed: ${statusData.data?.failMsg || "Unknown error"}`);
+            }
+
+            if (state === "success") {
+                const resultJsonStr = statusData.data?.resultJson;
+                if (!resultJsonStr) throw new Error("Task completed but no resultJson found");
+
+                const resultJson = JSON.parse(resultJsonStr);
+                if (resultJson.resultUrls && resultJson.resultUrls.length > 0) {
+                    return res.json({ url: resultJson.resultUrls[0] });
+                }
+                throw new Error("Task completed but no image URLs found");
+            }
+        }
+
+        throw new Error("Timeout: Image generation took too long");
+    } catch (err: any) {
+        console.error('Generation error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Create checkout session
 app.post('/api/create-checkout-session', authenticateUser, async (req, res) => {
     const { planKey, userId, userEmail, successUrl, cancelUrl } = req.body;

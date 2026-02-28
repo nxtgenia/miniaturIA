@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { API_URL } from './config';
+import { supabase } from './supabase';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const KIE_API_BASE = "https://api.kie.ai";
