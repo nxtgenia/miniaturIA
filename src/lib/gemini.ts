@@ -32,11 +32,6 @@ export async function generateThumbnail(
   prompt: string,
   referenceImages: { data: string; mimeType: string; tag?: string }[] = []
 ) {
-  const kieApiKey = import.meta.env.VITE_KIE_API_KEY;
-  if (!kieApiKey) {
-    throw new Error("Falta la clave VITE_KIE_API_KEY");
-  }
-
   // Upload images to get URLs (kie.ai requires URLs, not base64)
   console.log("Subiendo imágenes...");
   const uploadPromises: Promise<string>[] = [uploadImageToUrl(baseImageBase64)];
@@ -48,103 +43,43 @@ export async function generateThumbnail(
   console.log("Imágenes subidas:", imageUrls);
 
   // Send the user's prompt directly, converting UI tags (@img1, @obj1) to @fil format
-  // In kie.ai: @fil1 = base image, @fil2 = first reference, @fil3 = second reference, etc.
   let fullPrompt = prompt;
   referenceImages.forEach((ref, index) => {
     if (ref.tag) {
-      // Create a regex to replace exactly the tag globally
       const filTag = `@fil${index + 2}`;
       fullPrompt = fullPrompt.replace(new RegExp(ref.tag, 'g'), filTag);
     }
   });
 
   try {
-    // Step 1: Create the task with Nano Banana Pro
-    const createResponse = await fetch(`${KIE_API_BASE}/api/v1/jobs/createTask`, {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      throw new Error("No hay sesión activa de usuario.");
+    }
+
+    const response = await fetch(`${API_URL}/api/generate-thumbnail`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${kieApiKey}`,
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`
       },
       body: JSON.stringify({
-        model: "nano-banana-pro",
-        input: {
-          prompt: fullPrompt,
-          image_input: imageUrls,
-          aspect_ratio: "16:9",
-          resolution: "1K",
-          output_format: "png",
-        },
-      }),
+        fullPrompt,
+        imageUrls
+      })
     });
 
-    if (!createResponse.ok) {
-      const errorData = await createResponse.json().catch(() => ({}));
-      console.error("kie.ai Create Task Error:", errorData);
-      throw new Error(`Error de kie.ai (${createResponse.status}): ${errorData?.msg || errorData?.message || createResponse.statusText}`);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al generar la miniatura en el servidor');
     }
 
-    const createData = await createResponse.json();
-    console.log("kie.ai Task Created:", createData);
+    const data = await response.json();
+    if (!data.url) throw new Error("El servidor devolvió respuesta vacía");
 
-    if (createData.code !== 200) {
-      throw new Error(`Error de kie.ai: ${createData.msg || "Error desconocido"}`);
-    }
-
-    // Extract taskId from response: { code: 200, data: { taskId: "..." } }
-    const taskId = createData.data?.taskId;
-    if (!taskId) {
-      const responseStr = JSON.stringify(createData).substring(0, 500);
-      throw new Error(`kie.ai respuesta inesperada (sin taskId): ${responseStr}`);
-    }
-
-    // Step 2: Poll for result (max 120 seconds)
-    const maxAttempts = 80;
-    const pollInterval = 1500; // 1.5 seconds
-
-    for (let i = 0; i < maxAttempts; i++) {
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-
-      const statusResponse = await fetch(
-        `${KIE_API_BASE}/api/v1/jobs/recordInfo?taskId=${taskId}`,
-        {
-          headers: {
-            "Authorization": `Bearer ${kieApiKey}`,
-          },
-        }
-      );
-
-      if (!statusResponse.ok) continue;
-
-      const statusData = await statusResponse.json();
-      const state = statusData.data?.state;
-      console.log(`kie.ai Poll #${i + 1}: state=${state}`);
-
-      if (state === "fail") {
-        throw new Error(`La generación falló: ${statusData.data?.failMsg || "Error desconocido"}`);
-      }
-
-      if (state === "success") {
-        // resultJson is a JSON string: {"resultUrls":["https://..."]}
-        const resultJsonStr = statusData.data?.resultJson;
-        if (!resultJsonStr) {
-          throw new Error("La tarea se completó pero no hay resultJson en la respuesta.");
-        }
-
-        const resultJson = JSON.parse(resultJsonStr);
-        if (resultJson.resultUrls && resultJson.resultUrls.length > 0) {
-          return resultJson.resultUrls[0];
-        }
-
-        throw new Error("La tarea se completó pero no se encontraron URLs de imagen.");
-      }
-
-      // state === "waiting" → keep polling
-    }
-
-    throw new Error("Timeout: La generación tardó demasiado (>2 min). Intenta de nuevo.");
+    return data.url;
   } catch (error: any) {
-    console.error("kie.ai API Error:", error);
+    console.error("API Error:", error);
     throw error;
   }
 }
