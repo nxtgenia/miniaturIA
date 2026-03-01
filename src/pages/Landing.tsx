@@ -383,6 +383,7 @@ export default function Landing() {
                             loop
                             muted
                             playsInline
+                            title="Demostración del Generador de Miniaturas con IA"
                         />
 
                         {/* Play/Pause Overlay */}
@@ -429,7 +430,7 @@ export default function Landing() {
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="text-center mb-10">
                             <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider">
-                                Resultados generados con <span className="text-[#ff0000]">MiniaturIA</span>
+                                Miniaturas para YouTube generadas con nuestra <span className="text-[#ff0000]">IA</span>
                             </h2>
                         </div>
                         <div className="relative w-full overflow-hidden mask-fade-edges py-4">
@@ -445,7 +446,7 @@ export default function Landing() {
                                     >
                                         <img
                                             src={src}
-                                            alt={`Resultado generado por IA`}
+                                            alt={`Ejemplo de miniatura generada con IA para YouTube ${i + 1}`}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none"
                                         />
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
@@ -514,8 +515,8 @@ export default function Landing() {
                 {/* FEATURES */}
                 <section id="features" className="py-16 md:py-32 px-4 md:px-6 max-w-7xl mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-6">El <span className="text-[#ff0000]">Arsenal</span> Completo</h2>
-                        <p className="text-[#a1a1aa] max-w-2xl mx-auto">Todo lo que necesitas para que tu canal explote, en un solo lugar.</p>
+                        <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-6">El <span className="text-[#ff0000]">Mejor Generador</span> de Miniaturas con IA</h2>
+                        <p className="text-[#a1a1aa] max-w-2xl mx-auto">Optimizado para el algoritmo de YouTube. Sube tus views en segundos.</p>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6">
