@@ -164,11 +164,11 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
             console.log('⚠️  Webhook sin verificar (development mode)');
         }
     } catch (err: any) {
-        console.error('❌ Webhook signature verification failed:', err.message);
+        console.error(`❌ Webhook signature verification failed [${sig?.substring(0, 10)}...]:`, err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    console.log(`📩 Webhook: ${event.type}`);
+    console.log(`📩 Webhook Event Received: ${event.type} [ID: ${event.id}]`);
 
     try {
         switch (event.type) {
@@ -194,7 +194,8 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
             }
         }
     } catch (err) {
-        console.error('❌ Webhook handler error:', err);
+        console.error(`❌ Webhook handler error for ${event.type}:`, err);
+        return res.status(500).json({ error: 'Internal handler error' });
     }
 
     res.json({ received: true });
@@ -584,13 +585,17 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
         if (!pack) return;
 
         // Add credits
-        await supabaseAdmin.rpc('admin_add_credits', {
+        const { error: rpcError } = await supabaseAdmin.rpc('admin_add_credits', {
             target_user_id: userId,
             amount: pack.credits,
             description: `Compra: ${pack.name}`,
         });
 
-        console.log(`  💰 Added ${pack.credits} credits to user ${userId}`);
+        if (rpcError) {
+            console.error(`❌ Error adding credits for user ${userId}:`, rpcError);
+        } else {
+            console.log(`  💰 Added ${pack.credits} credits to user ${userId}`);
+        }
     }
     // Subscription is handled by invoice.paid event
 }

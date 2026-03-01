@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Sparkles, Download, RefreshCw, Layers, Info, Type, Image as ImageIcon, UserPlus, X, Plus, Settings, MessageCircle, BookOpen, Menu, ChevronLeft, LogOut, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ApiKeyGuard } from './components/ApiKeyGuard';
@@ -56,8 +56,10 @@ const UserAvatar = () => (
 );
 
 export default function App() {
-  const { credits, useCredits: spendCredits, hasEnoughCredits, loading: creditsLoading, plan } = useCredits();
+  const { credits, refreshCredits, hasEnoughCredits, useCredits: spendCredits, loading: creditsLoading, plan } = useCredits();
   const { user, signOut } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showTutorials, setShowTutorials] = useState(false);
@@ -97,6 +99,38 @@ export default function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Handle Stripe Success Callback
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success' && !isVerifyingPayment) {
+      setIsVerifyingPayment(true);
+      const initialStoreCredits = credits;
+
+      // Start polling for credits update
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        attempts++;
+        const { data } = await supabase
+          .from('profiles')
+          .select('credits, plan')
+          .eq('id', user?.id)
+          .single();
+
+        if (data && (data.credits > initialStoreCredits || data.plan !== 'free' || attempts >= 15)) {
+          clearInterval(interval);
+          await refreshCredits();
+          setIsVerifyingPayment(false);
+          // Clean up URL
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('payment');
+          setSearchParams(newParams);
+        }
+      }, 2500);
+
+      return () => clearInterval(interval);
+    }
+  }, [searchParams, user, refreshCredits]);
 
   // ===== SUPABASE: Sanitize messages for storage (strip base64, skip loading) =====
   const sanitizeMessages = (msgs: ChatMessage[]): ChatMessage[] => {
@@ -445,6 +479,25 @@ export default function App() {
 
         {/* Tutorials modal */}
         {showTutorials && <TutorialsModal onClose={() => setShowTutorials(false)} />}
+
+        {/* Verification Overlay */}
+        {isVerifyingPayment && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[200] flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-20 h-20 bg-[#ff0000]/10 rounded-full flex items-center justify-center mb-8 relative">
+              <div className="absolute inset-0 border-4 border-[#ff0000]/20 rounded-full border-t-[#ff0000] animate-spin"></div>
+              <Sparkles className="w-8 h-8 text-[#ff0000]" />
+            </div>
+            <h2 className="text-3xl font-black text-white mb-4">¡Pago recibido!</h2>
+            <p className="text-[#a1a1aa] max-w-sm leading-relaxed mb-8">
+              Estamos activando tus créditos en tu cuenta. Esto suele tardar unos segundos. <br /> No cierres esta ventana.
+            </p>
+            <div className="flex gap-2">
+              <div className="w-2 h-2 bg-[#ff0000] rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-[#ff0000] rounded-full animate-bounce [animation-delay:0.2s]"></div>
+              <div className="w-2 h-2 bg-[#ff0000] rounded-full animate-bounce [animation-delay:0.4s]"></div>
+            </div>
+          </div>
+        )}
 
         {/* ===== SIDEBAR ===== */}
         <aside className={`sidebar shrink-0 h-full bg-[#111111] border-r border-[#1e1e1e] flex flex-col z-[60] absolute md:relative transition-all duration-300 ${sidebarOpen ? 'w-[280px] left-0' : 'w-0 -left-[280px] md:left-0 md:w-0 overflow-hidden'}`}>

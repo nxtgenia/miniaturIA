@@ -44,6 +44,8 @@ const Paywall: React.FC<PaywallProps> = ({ onClose }) => {
                     planKey,
                     userId: user.id,
                     userEmail: user.email,
+                    successUrl: `${window.location.origin}/app?payment=success`,
+                    cancelUrl: `${window.location.origin}/app?payment=cancelled`,
                 }),
             });
 
