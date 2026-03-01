@@ -314,7 +314,7 @@ export default function Landing() {
                         transition={{ duration: 0.5 }}
                         className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ff0000]/10 border border-[#ff0000]/20 text-[#ff0000] text-xs font-semibold mb-8 uppercase tracking-wider"
                     >
-                        <Zap className="w-3.5 h-3.5" /> La herramienta secreta de los Top YouTubers
+                        <Zap className="w-3.5 h-3.5" /> La herramienta secreta de los YouTubers más TOP
                     </motion.div>
 
                     <motion.h1
