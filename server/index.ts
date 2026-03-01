@@ -487,8 +487,8 @@ app.post('/api/create-checkout-session', authenticateUser, async (req, res) => {
             payment_method_types: ['card'],
             line_items: [{ price: priceId, quantity: 1 }],
             mode: isSubscription ? 'subscription' : 'payment',
-            success_url: successUrl || `${req.headers.origin}/app?payment=success`,
-            cancel_url: cancelUrl || `${req.headers.origin}/app?payment=cancelled`,
+            success_url: successUrl || `${req.headers.origin || process.env.FRONTEND_URL || 'https://miniatur-ia.com'}/app?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: cancelUrl || `${req.headers.origin || process.env.FRONTEND_URL || 'https://miniatur-ia.com'}/app?payment=cancelled`,
             metadata: {
                 supabase_user_id: userId,
                 plan_key: planKey,
@@ -509,6 +509,59 @@ app.post('/api/create-checkout-session', authenticateUser, async (req, res) => {
         res.json({ url: session.url });
     } catch (err: any) {
         console.error('❌ Checkout error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Manual payment confirmation (Verification Fallback)
+app.post('/api/confirm-payment', authenticateUser, async (req, res) => {
+    const { sessionId: bodySessionId } = req.body;
+    const userId = (req as any).user.id;
+    let sessionId = bodySessionId;
+
+    console.log(`🔍 Verifying payment for user ${userId}...`);
+
+    try {
+        if (!sessionId) {
+            const { data: profile } = await supabaseAdmin
+                .from('profiles')
+                .select('stripe_customer_id')
+                .eq('id', userId)
+                .single();
+
+            if (profile?.stripe_customer_id) {
+                const sessions = await stripe.checkout.sessions.list({
+                    customer: profile.stripe_customer_id,
+                    limit: 1
+                });
+                if (sessions.data.length > 0) sessionId = sessions.data[0].id;
+            }
+        }
+
+        if (!sessionId) return res.status(400).json({ error: 'No session found' });
+
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ['subscription', 'subscription.latest_invoice'],
+        });
+
+        if (session.metadata?.supabase_user_id !== userId) {
+            return res.status(403).json({ error: 'Unauthorized session access' });
+        }
+
+        if (session.payment_status === 'paid') {
+            if (session.mode === 'payment') {
+                await handleCheckoutComplete(session);
+            } else if (session.mode === 'subscription' && session.subscription) {
+                const sub = session.subscription as Stripe.Subscription;
+                const inv = sub.latest_invoice as Stripe.Invoice;
+                if (inv && inv.status === 'paid') await handleInvoicePaid(inv);
+            }
+            return res.json({ success: true, status: 'paid' });
+        }
+
+        res.json({ success: false, status: session.payment_status });
+    } catch (err: any) {
+        console.error('❌ Verification error:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -572,11 +625,27 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
     const planKey = session.metadata?.plan_key;
 
     if (!userId || !planKey) {
-        console.error('❌ Missing metadata in checkout session');
+        console.error('❌ Missing metadata in checkout session:', session.id);
         return;
     }
 
-    console.log(`✅ Checkout complete: user=${userId}, plan=${planKey}`);
+    const transactionDesc = planKey.startsWith('pack_')
+        ? `Compra: ${planKey.replace('pack_', '')} (Session: ${session.id})`
+        : `Suscripción: ${planKey} (Session: ${session.id})`;
+
+    // Idempotency: check if transaction exists
+    const { data: existing } = await supabaseAdmin
+        .from('credit_transactions')
+        .select('id')
+        .eq('description', transactionDesc)
+        .maybeSingle();
+
+    if (existing) {
+        console.log(`ℹ️ Session ${session.id} already processed. Skipping.`);
+        return;
+    }
+
+    console.log(`✅ Processing checkout: user=${userId}, plan=${planKey} (Session: ${session.id})`);
 
     // Credit pack purchase (one-time)
     if (planKey.startsWith('pack_')) {
@@ -588,7 +657,7 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
         const { error: rpcError } = await supabaseAdmin.rpc('admin_add_credits', {
             target_user_id: userId,
             amount: pack.credits,
-            description: `Compra: ${pack.name}`,
+            description: transactionDesc,
         });
 
         if (rpcError) {
@@ -597,7 +666,7 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
             console.log(`  💰 Added ${pack.credits} credits to user ${userId}`);
         }
     }
-    // Subscription is handled by invoice.paid event
+    // Subscription mode is usually followed by invoice.paid, so subscriptions handled there
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
@@ -609,25 +678,38 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     const planKey = subscription.metadata?.plan_key;
 
     if (!userId || !planKey) {
-        console.error('❌ Missing metadata in subscription');
+        console.error('❌ Missing metadata in subscription:', subscriptionId);
         return;
     }
 
     const plan = SUBSCRIPTION_PLANS[planKey as keyof typeof SUBSCRIPTION_PLANS];
     if (!plan) return;
 
-    // Determine plan name and period
-    const planName = planKey.split('_')[0]; // starter, pro, agency
-    const planPeriod = planKey.split('_')[1]; // monthly, annual
+    const transactionDesc = `Renovación: ${plan.name} (Invoice: ${invoice.id})`;
 
-    // Update profile with plan info and add credits
+    // Idempotency check
+    const { data: existing } = await supabaseAdmin
+        .from('credit_transactions')
+        .select('id')
+        .eq('description', transactionDesc)
+        .maybeSingle();
+
+    if (existing) {
+        console.log(`ℹ️ Invoice ${invoice.id} already processed. Skipping.`);
+        return;
+    }
+
+    const planName = planKey.split('_')[0];
+    const planPeriod = planKey.split('_')[1];
+
+    // Update profile
     await supabaseAdmin
         .from('profiles')
         .update({
             plan: planName,
             plan_period: planPeriod,
             stripe_subscription_id: subscriptionId,
-            credits: plan.credits, // Reset to full credits on each renewal
+            credits: plan.credits,
             updated_at: new Date().toISOString(),
         })
         .eq('id', userId);
@@ -639,10 +721,10 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
             user_id: userId,
             amount: plan.credits,
             type: 'subscription',
-            description: `Renovación: ${plan.name}`,
+            description: transactionDesc,
         });
 
-    console.log(`  💎 Subscription renewed: ${plan.name} → ${plan.credits} credits for user ${userId}`);
+    console.log(`  💎 Subscription renewed: ${plan.name} → ${plan.credits} credits for user ${userId} (Invoice: ${invoice.id})`);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {

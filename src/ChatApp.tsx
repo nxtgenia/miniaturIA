@@ -57,7 +57,7 @@ const UserAvatar = () => (
 
 export default function App() {
   const { credits, refreshCredits, hasEnoughCredits, useCredits: spendCredits, loading: creditsLoading, plan } = useCredits();
-  const { user, signOut } = useAuth();
+  const { user, session, signOut } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -111,6 +111,24 @@ export default function App() {
       let attempts = 0;
       const interval = setInterval(async () => {
         attempts++;
+
+        // At first attempt, try to trigger manual verification on backend
+        const sessionId = searchParams.get('session_id');
+        if (attempts === 1) {
+          try {
+            await fetch(`${API_URL}/api/confirm-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`
+              },
+              body: JSON.stringify({ sessionId })
+            });
+          } catch (e) {
+            console.error("Manual verification failed:", e);
+          }
+        }
+
         const { data } = await supabase
           .from('profiles')
           .select('credits, plan')
@@ -124,13 +142,14 @@ export default function App() {
           // Clean up URL
           const newParams = new URLSearchParams(searchParams);
           newParams.delete('payment');
+          newParams.delete('session_id');
           setSearchParams(newParams);
         }
       }, 2500);
 
       return () => clearInterval(interval);
     }
-  }, [searchParams, user, refreshCredits]);
+  }, [searchParams, user, session, refreshCredits]);
 
   // ===== SUPABASE: Sanitize messages for storage (strip base64, skip loading) =====
   const sanitizeMessages = (msgs: ChatMessage[]): ChatMessage[] => {
@@ -491,6 +510,14 @@ export default function App() {
             <p className="text-[#a1a1aa] max-w-sm leading-relaxed mb-8">
               Estamos activando tus créditos en tu cuenta. Esto suele tardar unos segundos. <br /> No cierres esta ventana.
             </p>
+
+            <button
+              onClick={() => refreshCredits()}
+              className="text-[#ff0000] text-sm font-bold hover:underline mb-8"
+            >
+              Cargar créditos manualmente
+            </button>
+
             <div className="flex gap-2">
               <div className="w-2 h-2 bg-[#ff0000] rounded-full animate-bounce"></div>
               <div className="w-2 h-2 bg-[#ff0000] rounded-full animate-bounce [animation-delay:0.2s]"></div>
