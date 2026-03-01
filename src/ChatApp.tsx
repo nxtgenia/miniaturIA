@@ -100,6 +100,15 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [prompt]);
+
   // Handle Stripe Success Callback
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
@@ -798,7 +807,7 @@ export default function App() {
 
                 {/* ===== BOTTOM INPUT BAR (fixed) ===== */}
                 <div className="shrink-0 chat-bottom-glow border-t border-[#1a1a1a]/60 bg-[#0a0a0a]/90 backdrop-blur-xl">
-                  <div className="max-w-3xl mx-auto px-4 pt-5 pb-5">
+                  <div className="max-w-3xl mx-auto px-3 sm:px-4 pt-4 sm:pt-5 pb-5">
                     {/* Action chips row */}
                     <div className="flex items-center gap-2 mb-3 flex-wrap">
                       {/* Base image indicator */}
@@ -894,14 +903,14 @@ export default function App() {
                       <button
                         onClick={handleGenerate}
                         disabled={!baseImage || !prompt || isGenerating}
-                        className="glow-btn h-[44px] px-5 rounded-xl text-sm font-bold flex items-center gap-2 shrink-0"
+                        className="glow-btn h-[44px] px-3.5 sm:px-5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shrink-0 min-w-[44px]"
                       >
                         {isGenerating ? (
                           <RefreshCw className="w-4 h-4 animate-spin" />
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4" />
-                            <span className="hidden sm:inline">Generate</span>
+                            <span className="hidden sm:inline">Generar</span>
                           </>
                         )}
                       </button>

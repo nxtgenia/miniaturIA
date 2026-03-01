@@ -323,7 +323,7 @@ export default function Landing() {
                         transition={{ duration: 0.5, delay: 0.1 }}
                         className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] xl:text-[5rem] font-black text-white tracking-tight w-full max-w-[1400px] leading-[1.1] md:leading-[1.05] mb-6 md:mb-8"
                     >
-                        Generar miniaturas virales <br className="hidden md:block" /> en menos de <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff0000] to-[#f87171]">30 segundos</span>
+                        Genera miniaturas virales <br className="hidden md:block" /> en menos de <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff0000] to-[#f87171]">un minuto</span>
                     </motion.h1>
 
                     <motion.p
