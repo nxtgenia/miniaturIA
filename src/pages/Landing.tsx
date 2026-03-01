@@ -120,7 +120,11 @@ const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void 
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
+                    className="flex flex-col items-center"
                 >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-black uppercase tracking-widest mb-6 animate-pulse">
+                        🚀 Oferta de Lanzamiento - Solo esta semana
+                    </div>
                     <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-4">
                         Elige tu plan y empieza a <span className="text-[#ff0000]">escalar</span> hoy
                     </h2>
@@ -312,9 +316,14 @@ export default function Landing() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ff0000]/10 border border-[#ff0000]/20 text-[#ff0000] text-xs font-semibold mb-8 uppercase tracking-wider"
+                        className="flex flex-col items-center gap-3 mb-8"
                     >
-                        <Zap className="w-3.5 h-3.5" /> La herramienta secreta de los YouTubers más TOP
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ff0000]/10 border border-[#ff0000]/20 text-[#ff0000] text-xs font-semibold uppercase tracking-wider">
+                            <Zap className="w-3.5 h-3.5" /> La herramienta secreta de los YouTubers más TOP
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                            🔥 Precio especial de lanzamiento
+                        </div>
                     </motion.div>
 
                     <motion.h1
@@ -339,18 +348,20 @@ export default function Landing() {
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, delay: 0.3 }}
-                        className="mt-12 w-full max-w-5xl rounded-2xl border border-[#2a2a2a] bg-[#141414] p-2 shadow-2xl relative"
+                        className="mt-12 w-full max-w-5xl rounded-3xl border border-[#2a2a2a] bg-[#141414] p-2 shadow-[0_0_50px_rgba(255,0,0,0.15)] relative overflow-hidden group"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10 rounded-2xl pointer-events-none" />
-                        <img
-                            src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=2574&auto=format&fit=crop"
-                            alt="MiniaturIA Dashboard"
-                            className="rounded-xl object-cover w-full h-[300px] sm:h-[500px] opacity-80"
-                            style={{ filter: 'grayscale(0.2) contrast(1.2)' }}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10 pointer-events-none" />
+                        <video
+                            src="https://assets.cdn.filesafe.space/bwkBnSpWzVDw4uHoWGeY/media/69a486ac133a407bee759874.mp4"
+                            className="rounded-2xl w-full h-auto aspect-video object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-700"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
                         />
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
-                            <div className="w-20 h-20 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-[0_0_50px_rgba(239,68,68,0.3)]">
-                                <AppLogo />
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                            <div className="w-20 h-20 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-[0_0_50px_rgba(255,0,0,0.3)]">
+                                <PlayCircle className="w-10 h-10 text-white" />
                             </div>
                         </div>
                     </motion.div>
