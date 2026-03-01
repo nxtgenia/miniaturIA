@@ -1,7 +1,7 @@
 import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Sparkles, Youtube, Layers, Type, Zap, CheckCircle2, Bot, PlayCircle, Image as ImageIcon, Download, TrendingDown, Clock, SearchX, Lock, ArrowRight, Star, ChevronDown, MessageSquare } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import CheckoutSignupModal from '../components/CheckoutSignupModal';
 
@@ -255,6 +255,29 @@ const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void 
 export default function Landing() {
     const { user, loading } = useAuth();
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+    const [isMuted, setIsMuted] = useState(true);
+
+    const toggleVideo = () => {
+        if (videoRef.current) {
+            if (videoRef.current.paused) {
+                videoRef.current.play();
+                setIsVideoPlaying(true);
+            } else {
+                videoRef.current.pause();
+                setIsVideoPlaying(false);
+            }
+        }
+    };
+
+    const toggleMute = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (videoRef.current) {
+            videoRef.current.muted = !videoRef.current.muted;
+            setIsMuted(videoRef.current.muted);
+        }
+    };
 
     const scrollToPricing = () => {
         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
@@ -348,10 +371,12 @@ export default function Landing() {
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, delay: 0.3 }}
-                        className="mt-12 w-full max-w-5xl rounded-3xl border border-[#2a2a2a] bg-[#141414] p-2 shadow-[0_0_50px_rgba(255,0,0,0.15)] relative overflow-hidden group"
+                        className="mt-12 w-full max-w-5xl rounded-3xl border border-[#2a2a2a] bg-[#141414] p-2 shadow-[0_0_50px_rgba(255,0,0,0.15)] relative overflow-hidden group cursor-pointer"
+                        onClick={toggleVideo}
                     >
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10 pointer-events-none" />
                         <video
+                            ref={videoRef}
                             src="https://assets.cdn.filesafe.space/bwkBnSpWzVDw4uHoWGeY/media/69a486ac133a407bee759874.mp4"
                             className="rounded-2xl w-full h-auto aspect-video object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-700"
                             autoPlay
@@ -359,11 +384,28 @@ export default function Landing() {
                             muted
                             playsInline
                         />
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+
+                        {/* Play/Pause Overlay */}
+                        <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center transition-opacity duration-500 ${isVideoPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
                             <div className="w-20 h-20 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-[0_0_50px_rgba(255,0,0,0.3)]">
-                                <PlayCircle className="w-10 h-10 text-white" />
+                                {isVideoPlaying ? (
+                                    <div className="w-8 h-8 flex gap-1.5 items-center justify-center">
+                                        <div className="w-2 h-full bg-white rounded-full animate-pulse" />
+                                        <div className="w-2 h-full bg-white rounded-full animate-pulse delay-75" />
+                                    </div>
+                                ) : (
+                                    <PlayCircle className="w-10 h-10 text-white fill-white/20" />
+                                )}
                             </div>
                         </div>
+
+                        {/* Mute toggle button */}
+                        <button
+                            onClick={toggleMute}
+                            className="absolute bottom-6 right-6 z-30 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/10 text-white hover:bg-white hover:text-black transition-all"
+                        >
+                            {isMuted ? <Bot className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+                        </button>
                     </motion.div>
 
                     <motion.div
