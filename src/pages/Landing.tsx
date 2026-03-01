@@ -332,7 +332,7 @@ export default function Landing() {
                         transition={{ duration: 0.5, delay: 0.2 }}
                         className="text-lg md:text-xl text-[#a1a1aa] max-w-2xl mb-12"
                     >
-                        Multiplica tu CTR x3 usando IA. Analizamos lo que funciona en YouTube y generamos miniaturas y títulos virales en segundos para tus videos.
+                        Multiplica tu CTR x3 usando IA. Analizamos lo que funciona en YouTube y generamos miniaturas y títulos virales en segundos para tus vídeos.
                     </motion.p>
 
                     <motion.div
@@ -486,7 +486,7 @@ export default function Landing() {
                                 <Type className="w-7 h-7 text-[#ff0000]" />
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-4">Títulos de Alta Retención</h3>
-                            <p className="text-[#a1a1aa] mb-6 leading-relaxed">No más "Mi primer vlog". Nuestro modelo entiendo de curiosidad, urgencia y emociones para darte títulos que la gente no puede evitar clickear.</p>
+                            <p className="text-[#a1a1aa] mb-6 leading-relaxed">No más "Mi primer vlog". Nuestro modelo entiende de curiosidad, urgencia y emociones para darte títulos que la gente no puede evitar clickear.</p>
                             <ul className="space-y-3">
                                 {['Análisis de competencia en tiempo real', 'Variantes clickbait (pero ético)', 'A/B Testing Simulator'].map((item, i) => (
                                     <li key={i} className="flex items-center gap-3 text-sm text-[#d4d4d8]">
@@ -510,7 +510,7 @@ export default function Landing() {
                                 {
                                     step: '01',
                                     title: 'Añade tu referencia',
-                                    desc: 'Sube tu foto con cara de sorpresa o simplemente pon el link del video de tu youtuber favorito como base.',
+                                    desc: 'Sube tu foto con cara de sorpresa o simplemente pon el link del vídeo de tu youtuber favorito como base.',
                                     icon: <Layers className="w-6 h-6 text-[#ff0000]" />
                                 },
                                 {
@@ -557,7 +557,7 @@ export default function Landing() {
                         {[
                             {
                                 name: "Alex Costa", handle: "@alexcosta_oficial", subs: "1.2M Subs",
-                                text: "Antes tardaba 4 horas en encargar una miniatura, mandar revisiones, y si el video no pegaba el bajón era terrible. Ahora genero opciones yo mismo en segundos y testeo cuál pega más. Mi CTR subió del 4% al 11.2%. Loco.",
+                                text: "Antes tardaba 4 horas en encargar una miniatura, mandar revisiones, y si el vídeo no pegaba el bajón era terrible. Ahora genero opciones yo mismo en segundos y testeo cuál pega más. Mi CTR subió del 4% al 11.2%. Loco.",
                                 pfp: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=100&h=100"
                             },
                             {
@@ -567,7 +567,7 @@ export default function Landing() {
                             },
                             {
                                 name: "Matias Gameplay", handle: "@matygamesxd", subs: "280k Subs",
-                                text: "Bro, literal usé la herramienta para resubir un video que había muerto con 2k views. Le cambié la miniatura con IA por una súper saturada y le metí un título que me escupió el bot... Boom, 150k en 3 días. Es magia negra.",
+                                text: "Bro, literal usé la herramienta para resubir un vídeo que había muerto con 2k views. Le cambié la miniatura con IA por una súper saturada y le metí un título que me escupió el bot... Boom, 150k en 3 días. Es magia negra.",
                                 pfp: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100&h=100"
                             }
                         ].map((t, i) => (
