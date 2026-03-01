@@ -702,29 +702,30 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     const planName = planKey.split('_')[0];
     const planPeriod = planKey.split('_')[1];
 
-    // Update profile
+    // 1. Update status metadata (plan, period, subscription_id)
     await supabaseAdmin
         .from('profiles')
         .update({
             plan: planName,
             plan_period: planPeriod,
             stripe_subscription_id: subscriptionId,
-            credits: plan.credits,
             updated_at: new Date().toISOString(),
         })
         .eq('id', userId);
 
-    // Log transaction
-    await supabaseAdmin
-        .from('credit_transactions')
-        .insert({
-            user_id: userId,
-            amount: plan.credits,
-            type: 'subscription',
-            description: transactionDesc,
-        });
+    // 2. Add credits (Idempotent via transactionLog check in step above)
+    // We use the RPC because it correctly increments credits = credits + amount
+    const { error: rpcError } = await supabaseAdmin.rpc('admin_add_credits', {
+        target_user_id: userId,
+        amount: plan.credits,
+        description: transactionDesc,
+    });
 
-    console.log(`  💎 Subscription renewed: ${plan.name} → ${plan.credits} credits for user ${userId} (Invoice: ${invoice.id})`);
+    if (rpcError) {
+        console.error(`❌ Error adding renewal credits for user ${userId}:`, rpcError);
+    } else {
+        console.log(`  💎 Subscription renewed and credits ADDED: ${plan.name} (+${plan.credits}) for user ${userId} (Invoice: ${invoice.id})`);
+    }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
