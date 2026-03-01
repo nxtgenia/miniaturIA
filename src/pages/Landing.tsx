@@ -421,18 +421,18 @@ export default function Landing() {
                         {/* Content */}
                         <div className="space-y-6 text-base md:text-lg text-black/80 font-medium leading-relaxed">
                             <p>
-                                Si creas contenido en YouTube, aceptá la verdad: <span className="bg-[#ff0000]/10 font-bold px-1 rounded text-black shadow-[inset_0_-8px_0_rgba(255,0,0,0.2)]">La retención no sirve de nada si nadie hace clic.</span> El creativo lo es todo.
+                                Si creas contenido en YouTube, acepta la verdad: <span className="bg-[#ff0000]/10 font-bold px-1 rounded text-black shadow-[inset_0_-8px_0_rgba(255,0,0,0.2)]">La retención no sirve de nada si nadie hace clic.</span> El creativo lo es todo.
                             </p>
-                            <p>Pero hoy estás trabado:</p>
+                            <p>Pero hoy estás atascado:</p>
 
                             <div className="bg-white rounded-2xl p-6 md:p-8 space-y-6 my-8 shadow-sm border border-black/5">
                                 <div className="flex gap-4 items-start">
                                     <span className="text-2xl mt-1">⏳</span>
-                                    <p><strong className="text-black">Perdés horas</strong> buscando la idea perfecta y diseñando en Photoshop a mano para lograr resultados mediocres.</p>
+                                    <p><strong className="text-black">Pierdes horas</strong> buscando la idea perfecta y diseñando en Photoshop a mano para lograr resultados mediocres.</p>
                                 </div>
                                 <div className="flex gap-4 items-start">
                                     <span className="text-2xl mt-1">🎲</span>
-                                    <p><strong className="text-black">Testeás poco</strong> (1 miniatura por vídeo) y rezás que funcione, jugándotela a la ruleta rusa con tu canal.</p>
+                                    <p><strong className="text-black">Testeas poco</strong> (1 miniatura por vídeo) y rezas para que funcione, jugándotela a la ruleta rusa con tu canal.</p>
                                 </div>
                                 <div className="flex gap-4 items-start">
                                     <span className="text-2xl mt-1">📉</span>
@@ -440,13 +440,13 @@ export default function Landing() {
                                 </div>
                             </div>
 
-                            <h3 className="text-3xl md:text-4xl font-black text-black pt-4 pb-2 tracking-tight">Necesitás volumen.</h3>
+                            <h3 className="text-3xl md:text-4xl font-black text-black pt-4 pb-2 tracking-tight">Necesitas volumen.</h3>
 
                             <p>La matemática en YouTube es cruda: <strong className="text-black">Los canales top generan hasta 20 opciones por vídeo.</strong></p>
 
                             <div className="space-y-2 mt-8 bg-black/5 p-6 rounded-2xl border-l-4 border-[#ff0000]">
-                                <p className="font-bold text-black/70">Si testeás 1 o 2 miniaturas, es lotería.</p>
-                                <p className="font-bold text-[#ff0000] text-xl">Si generás variaciones en 30 segundos cada una, es estadística.</p>
+                                <p className="font-bold text-black/70">Si testeas 1 o 2 miniaturas, es lotería.</p>
+                                <p className="font-bold text-[#ff0000] text-xl">Si generas variaciones en 30 segundos cada una, es estadística.</p>
                             </div>
 
                             <div className="pt-12 flex justify-center">
