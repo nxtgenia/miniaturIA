@@ -619,7 +619,7 @@ export default function App() {
         </aside>
 
         {/* ===== MAIN CONTENT ===== */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
 
           {/* ===== HEADER ===== */}
           <header className="shrink-0 z-40 pt-3 pb-2.5 border-b border-[#1a1a1a]/80">
@@ -806,8 +806,8 @@ export default function App() {
                 </div>
 
                 {/* ===== BOTTOM INPUT BAR (fixed) ===== */}
-                <div className="shrink-0 chat-bottom-glow border-t border-[#1a1a1a]/60 bg-[#0a0a0a]/90 backdrop-blur-xl">
-                  <div className="max-w-3xl mx-auto px-3 sm:px-4 pt-4 sm:pt-5 pb-5">
+                <div className="shrink-0 chat-bottom-glow border-t border-[#1a1a1a]/60 bg-[#0a0a0a]/90 backdrop-blur-xl w-full">
+                  <div className="max-w-3xl mx-auto px-2 sm:px-4 pt-3 sm:pt-5 pb-5 w-full overflow-hidden">
                     {/* Action chips row */}
                     <div className="flex items-center gap-2 mb-3 flex-wrap">
                       {/* Base image indicator */}
@@ -886,24 +886,24 @@ export default function App() {
                     </AnimatePresence>
 
                     {/* Prompt input + Generate button */}
-                    <div className="relative flex items-end gap-2">
-                      <div className="flex-1 relative">
+                    <div className="w-full grid grid-cols-[1fr,auto] gap-2 items-end relative overflow-hidden">
+                      <div className="min-w-0 relative">
                         <textarea
                           ref={textareaRef}
                           value={prompt}
                           onChange={(e) => setPrompt(e.target.value)}
                           onKeyDown={handleKeyDown}
-                          placeholder={baseImage ? "Describe los cambios que quieres hacer..." : "Primero sube una imagen base ↑"}
+                          placeholder={baseImage ? "Escribe qué quieres cambiar..." : "Primero sube una imagen base ↑"}
                           disabled={!baseImage}
                           rows={1}
-                          className="w-full bg-[#141414] border border-[#1e1e1e] focus:border-[#ff0000]/50 rounded-xl py-3 px-4 pr-4 text-sm text-[#e4e4e7] placeholder:text-[#444] focus:outline-none transition-colors resize-none disabled:opacity-40 disabled:cursor-not-allowed"
-                          style={{ minHeight: '44px' }}
+                          className="w-full block bg-[#141414] border border-[#1e1e1e] focus:border-[#ff0000]/50 rounded-xl py-3 px-3 sm:px-4 text-[13px] sm:text-sm text-[#e4e4e7] placeholder:text-[#444] focus:outline-none transition-colors resize-none disabled:opacity-40 disabled:cursor-not-allowed overflow-y-auto"
+                          style={{ minHeight: '44px', maxHeight: '150px' }}
                         />
                       </div>
                       <button
                         onClick={handleGenerate}
                         disabled={!baseImage || !prompt || isGenerating}
-                        className="glow-btn h-[44px] px-3.5 sm:px-5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shrink-0 min-w-[44px]"
+                        className="glow-btn h-[44px] px-3 sm:px-5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shrink-0 min-w-[44px]"
                       >
                         {isGenerating ? (
                           <RefreshCw className="w-4 h-4 animate-spin" />
