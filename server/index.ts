@@ -277,25 +277,14 @@ app.post('/api/upload-image', async (req, res) => {
         }
 
         const mime = matches[1];
-        const ext = mime.split('/')[1] || 'png';
         const imageBuffer = Buffer.from(matches[2], 'base64');
 
-        const formData = new FormData();
-        const blob = new Blob([imageBuffer], { type: mime });
-        formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', blob, `image.${ext}`);
+        const id = Date.now().toString() + '-' + Math.random().toString(36).substring(2, 9);
+        imageCache.set(id, { buffer: imageBuffer, mime, expires: Date.now() + 5 * 60 * 1000 }); // Expires in 5 minutes
 
-        const uploadRes = await fetch('https://catbox.moe/userapi.php', {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (!uploadRes.ok) {
-            throw new Error(`Upload failed: ${uploadRes.status}`);
-        }
-
-        const url = await uploadRes.text();
-        if (!url || !url.startsWith('https://')) throw new Error('No URL in upload response');
+        // Get server URL to construct the public link
+        const serverUrl = process.env.SERVER_URL || process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get('host')}`;
+        const url = `${serverUrl}/api/cached-image/${id}`;
 
         res.json({ url });
     } catch (err: any) {
