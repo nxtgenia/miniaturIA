@@ -10,6 +10,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// In-memory store for kie.ai callback results
+// taskId → { state, url?, error? }
+const kieTaskResults = new Map<string, { state: string; url?: string; error?: string }>();
+
 // CORS configuration (allow requests from the frontend flexibly)
 app.use(cors({
     origin: (origin, callback) => {
@@ -351,11 +355,34 @@ const authenticateUser = async (req: express.Request, res: express.Response, nex
     next();
 };
 
-app.post('/api/generate-thumbnail', authenticateUser, async (req, res) => {
+// Callback endpoint: kie.ai POSTs here when a task completes (no auth needed, called by kie.ai)
+app.post('/api/kie-callback', async (req, res) => {
+    try {
+        const data = req.body?.data;
+        const taskId = data?.taskId;
+        if (!taskId) return res.sendStatus(200);
+
+        if (data.state === 'success') {
+            const resultJson = JSON.parse(data.resultJson || '{}');
+            const url = resultJson.resultUrls?.[0];
+            kieTaskResults.set(taskId, { state: 'success', url });
+        } else if (data.state === 'fail') {
+            kieTaskResults.set(taskId, { state: 'fail', error: data.failMsg || 'Generation failed' });
+        }
+
+        res.sendStatus(200);
+    } catch {
+        res.sendStatus(200); // Always 200 so kie.ai doesn't retry
+    }
+});
+
+// Step 1: Create the generation task and return taskId immediately (no blocking)
+app.post('/api/start-generation', authenticateUser, async (req, res) => {
     try {
         const { fullPrompt, imageUrls } = req.body;
         const kieApiKey = process.env.KIE_API_KEY || process.env.VITE_KIE_API_KEY;
         const KIE_API_BASE = "https://api.kie.ai";
+        const serverUrl = process.env.SERVER_URL || process.env.RENDER_EXTERNAL_URL;
 
         if (!kieApiKey) {
             return res.status(500).json({ error: 'KIE_API_KEY is not configured on the server' });
@@ -364,22 +391,28 @@ app.post('/api/generate-thumbnail', authenticateUser, async (req, res) => {
             return res.status(400).json({ error: 'Missing fullPrompt or imageUrls' });
         }
 
+        const body: any = {
+            model: "nano-banana-2",
+            input: {
+                prompt: fullPrompt,
+                image_input: imageUrls,
+                aspect_ratio: "16:9",
+                resolution: "1K",
+                output_format: "jpg",
+            },
+        };
+
+        if (serverUrl) {
+            body.callBackUrl = `${serverUrl}/api/kie-callback`;
+        }
+
         const createResponse = await fetch(`${KIE_API_BASE}/api/v1/jobs/createTask`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${kieApiKey}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-                model: "nano-banana-pro",
-                input: {
-                    prompt: fullPrompt,
-                    image_input: imageUrls,
-                    aspect_ratio: "16:9",
-                    resolution: "1K",
-                    output_format: "png",
-                },
-            }),
+            body: JSON.stringify(body),
         });
 
         if (!createResponse.ok) {
@@ -397,42 +430,63 @@ app.post('/api/generate-thumbnail', authenticateUser, async (req, res) => {
             throw new Error("Kie.ai response missing taskId");
         }
 
-        // We can poll here on the server
-        const maxAttempts = 120; // Increase max attempts to handle longer generations
-        const pollInterval = 2000; // Increase poll interval to 2 seconds
+        return res.json({ taskId });
+    } catch (err: any) {
+        console.error('Start generation error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
 
-        for (let i = 0; i < maxAttempts; i++) {
-            await new Promise(resolve => setTimeout(resolve, pollInterval));
+// Step 2: Check generation status — returns callback result instantly if available, otherwise polls kie.ai
+app.get('/api/generation-status/:taskId', authenticateUser, async (req, res) => {
+    try {
+        const { taskId } = req.params;
 
-            const statusResponse = await fetch(
-                `${KIE_API_BASE}/api/v1/jobs/recordInfo?taskId=${taskId}`,
-                { headers: { "Authorization": `Bearer ${kieApiKey}` } }
-            );
-
-            if (!statusResponse.ok) continue;
-
-            const statusData = await statusResponse.json();
-            const state = statusData.data?.state;
-
-            if (state === "fail") {
-                throw new Error(`Generation failed: ${statusData.data?.failMsg || "Unknown error"}`);
-            }
-
-            if (state === "success") {
-                const resultJsonStr = statusData.data?.resultJson;
-                if (!resultJsonStr) throw new Error("Task completed but no resultJson found");
-
-                const resultJson = JSON.parse(resultJsonStr);
-                if (resultJson.resultUrls && resultJson.resultUrls.length > 0) {
-                    return res.json({ url: resultJson.resultUrls[0] });
-                }
-                throw new Error("Task completed but no image URLs found");
-            }
+        // Fast path: callback already arrived
+        const cached = kieTaskResults.get(taskId);
+        if (cached) {
+            kieTaskResults.delete(taskId); // free memory once delivered
+            return res.json(cached);
         }
 
-        throw new Error("Timeout: Image generation took too long");
+        // Fallback: poll kie.ai directly
+        const kieApiKey = process.env.KIE_API_KEY || process.env.VITE_KIE_API_KEY;
+        const KIE_API_BASE = "https://api.kie.ai";
+
+        if (!kieApiKey) {
+            return res.status(500).json({ error: 'KIE_API_KEY is not configured on the server' });
+        }
+
+        const statusResponse = await fetch(
+            `${KIE_API_BASE}/api/v1/jobs/recordInfo?taskId=${taskId}`,
+            { headers: { "Authorization": `Bearer ${kieApiKey}` } }
+        );
+
+        if (!statusResponse.ok) {
+            return res.status(statusResponse.status).json({ error: 'Error checking status' });
+        }
+
+        const statusData = await statusResponse.json();
+        const state = statusData.data?.state;
+
+        if (state === "fail") {
+            return res.json({ state: 'fail', error: statusData.data?.failMsg || 'Generation failed' });
+        }
+
+        if (state === "success") {
+            const resultJsonStr = statusData.data?.resultJson;
+            if (!resultJsonStr) return res.json({ state: 'fail', error: 'No result found' });
+
+            const resultJson = JSON.parse(resultJsonStr);
+            if (resultJson.resultUrls?.length > 0) {
+                return res.json({ state: 'success', url: resultJson.resultUrls[0] });
+            }
+            return res.json({ state: 'fail', error: 'No image URLs found' });
+        }
+
+        return res.json({ state: 'waiting' });
     } catch (err: any) {
-        console.error('Generation error:', err);
+        console.error('Status check error:', err);
         res.status(500).json({ error: err.message });
     }
 });
