@@ -80,12 +80,13 @@ function imageProxyPlugin(): Plugin {
           const ext = mime.split('/')[1] || 'png';
           const imageBuffer = Buffer.from(matches[2], 'base64');
 
-          // Upload to tmpfiles.org from server (much faster)
+          // Upload to catbox.moe from server (much faster)
           const formData = new FormData();
           const blob = new Blob([imageBuffer], { type: mime });
-          formData.append('file', blob, `image.${ext}`);
+          formData.append('reqtype', 'fileupload');
+          formData.append('fileToUpload', blob, `image.${ext}`);
 
-          const uploadRes = await fetch('https://tmpfiles.org/api/v1/upload', {
+          const uploadRes = await fetch('https://catbox.moe/userapi.php', {
             method: 'POST',
             body: formData,
           });
@@ -94,12 +95,8 @@ function imageProxyPlugin(): Plugin {
             throw new Error(`Upload failed: ${uploadRes.status}`);
           }
 
-          const uploadData = await uploadRes.json() as any;
-          const url = uploadData.data?.url;
-          if (!url) throw new Error('No URL in upload response');
-
-          // Convert to direct download URL
-          const directUrl = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+          const directUrl = await uploadRes.text();
+          if (!directUrl || !directUrl.startsWith('http')) throw new Error('No URL in upload response');
 
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ url: directUrl }));

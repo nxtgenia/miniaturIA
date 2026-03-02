@@ -285,7 +285,7 @@ app.post('/api/upload-image', async (req, res) => {
         formData.append('reqtype', 'fileupload');
         formData.append('fileToUpload', blob, `image.${ext}`);
 
-        const uploadRes = await fetch('https://catbox.moe/user/api.php', {
+        const uploadRes = await fetch('https://catbox.moe/userapi.php', {
             method: 'POST',
             body: formData,
         });

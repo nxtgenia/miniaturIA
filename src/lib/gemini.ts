@@ -51,37 +51,67 @@ export async function generateThumbnail(
     }
   });
 
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      throw new Error("No hay sesión activa de usuario.");
-    }
-
-    const response = await fetch(`${API_URL}/api/generate-thumbnail`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify({
-        fullPrompt,
-        imageUrls
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || 'Error al generar la miniatura en el servidor');
-    }
-
-    const data = await response.json();
-    if (!data.url) throw new Error("El servidor devolvió respuesta vacía");
-
-    return data.url;
-  } catch (error: any) {
-    console.error("API Error:", error);
-    throw error;
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !session) {
+    throw new Error("No hay sesión activa de usuario.");
   }
+
+  const authHeader = { "Authorization": `Bearer ${session.access_token}` };
+  const MAX_RETRIES = 3;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // Step 1: Create the task (returns immediately with taskId)
+      const startResponse = await fetch(`${API_URL}/api/start-generation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ fullPrompt, imageUrls })
+      });
+
+      if (!startResponse.ok) {
+        const err = await startResponse.json().catch(() => ({}));
+        throw new Error((err as any).error || 'Error al iniciar la generación');
+      }
+
+      const { taskId } = await startResponse.json();
+      if (!taskId) throw new Error("No se recibió taskId del servidor");
+
+      // Step 2: Poll status from the frontend (no server-side timeout risk)
+      const maxAttempts = 150; // 5 minutes at 2s intervals
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const statusResponse = await fetch(
+          `${API_URL}/api/generation-status/${taskId}`,
+          { headers: authHeader }
+        );
+
+        if (!statusResponse.ok) continue;
+
+        const status = await statusResponse.json();
+
+        if (status.state === 'success') return status.url;
+        if (status.state === 'fail') {
+          // Transient error from kie.ai — retry with a new task
+          console.warn(`Intento ${attempt}/${MAX_RETRIES} fallido: ${status.error}`);
+          throw new Error(status.error || 'La generación falló');
+        }
+        // state === 'pending' → keep polling
+      }
+
+      throw new Error("Timeout");
+    } catch (error: any) {
+      if (attempt === MAX_RETRIES) {
+        console.error("API Error tras todos los intentos:", error);
+        throw new Error("No se pudo generar la imagen tras varios intentos. Por favor, inténtalo de nuevo.");
+      }
+      // Wait 3s before retrying
+      console.warn(`Reintentando generación (${attempt}/${MAX_RETRIES})...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  }
+
+  throw new Error("Error inesperado en la generación.");
 }
 
 export function getYouTubeThumbnail(url: string) {
@@ -200,12 +230,11 @@ CRÍTICO: Devuelve tu respuesta ÚNICAMENTE como un array de objetos JSON puro. 
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) throw new Error("No se generaron títulos: Respuesta vacía de la API");
 
-    // Clean up potential markdown blocks if the model ignored the strict JSON rule
+    // Extract JSON array even if the model added surrounding text
     text = text.trim();
-    if (text.startsWith("```json")) text = text.substring(7);
-    else if (text.startsWith("```")) text = text.substring(3);
-    if (text.endsWith("```")) text = text.substring(0, text.length - 3);
-    text = text.trim();
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error("No se encontró JSON válido en la respuesta de la API");
+    text = jsonMatch[0];
 
     return { titles: JSON.parse(text) };
   } catch (error: any) {
