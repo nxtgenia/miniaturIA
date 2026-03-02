@@ -521,10 +521,43 @@ export default function App() {
             </p>
 
             <button
-              onClick={() => refreshCredits()}
-              className="text-[#ff0000] text-sm font-bold hover:underline mb-8"
+              onClick={async () => {
+                const sessionId = searchParams.get('session_id');
+                try {
+                  await fetch(`${API_URL}/api/confirm-payment`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${session?.access_token}`
+                    },
+                    body: JSON.stringify({ sessionId })
+                  });
+                  await refreshCredits();
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  setIsVerifyingPayment(false);
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.delete('payment');
+                  newParams.delete('session_id');
+                  setSearchParams(newParams);
+                }
+              }}
+              className="glow-btn px-6 py-2.5 rounded-full font-bold flex items-center justify-center text-white mb-4 bg-gradient-to-r from-[#ff0000] to-[#b30000]"
             >
-              Cargar créditos manualmente
+              Comprobar mi pago manualmente
+            </button>
+            <button
+              onClick={() => {
+                setIsVerifyingPayment(false);
+                const newParams = new URLSearchParams(searchParams);
+                newParams.delete('payment');
+                newParams.delete('session_id');
+                setSearchParams(newParams);
+              }}
+              className="text-[#a1a1aa] text-sm hover:text-white underline mb-8"
+            >
+              Cerrar esta ventana
             </button>
 
             <div className="flex gap-2">

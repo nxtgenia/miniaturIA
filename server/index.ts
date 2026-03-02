@@ -696,17 +696,24 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
         const pack = CREDIT_PACKS[packName];
         if (!pack) return;
 
-        // Add credits
-        const { error: rpcError } = await supabaseAdmin.rpc('admin_add_credits', {
-            target_user_id: userId,
-            amount: pack.credits,
-            description: transactionDesc,
-        });
+        // Add credits manually in JS (to avoid RPC dependent failures)
+        const { data: profile } = await supabaseAdmin.from('profiles').select('credits').eq('id', userId).single();
+        const newCredits = (profile?.credits || 0) + pack.credits;
 
-        if (rpcError) {
-            console.error(`❌ Error adding credits for user ${userId}:`, rpcError);
+        const { error: updateError } = await supabaseAdmin.from('profiles').update({ credits: newCredits }).eq('id', userId);
+
+        if (updateError) {
+            console.error(`❌ Error adding credits for user ${userId}:`, updateError);
         } else {
             console.log(`  💰 Added ${pack.credits} credits to user ${userId}`);
+
+            // Register transaction log
+            await supabaseAdmin.from('credit_transactions').insert({
+                user_id: userId,
+                amount: pack.credits,
+                type: 'purchase',
+                description: transactionDesc
+            });
         }
     }
     // Subscription mode is usually followed by invoice.paid, so subscriptions handled there
@@ -756,18 +763,24 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         })
         .eq('id', userId);
 
-    // 2. Add credits (Idempotent via transactionLog check in step above)
-    // We use the RPC because it correctly increments credits = credits + amount
-    const { error: rpcError } = await supabaseAdmin.rpc('admin_add_credits', {
-        target_user_id: userId,
-        amount: plan.credits,
-        description: transactionDesc,
-    });
+    // 2. Add credits
+    const { data: profile } = await supabaseAdmin.from('profiles').select('credits').eq('id', userId).single();
+    const newCredits = (profile?.credits || 0) + plan.credits;
 
-    if (rpcError) {
-        console.error(`❌ Error adding renewal credits for user ${userId}:`, rpcError);
+    const { error: updateError } = await supabaseAdmin.from('profiles').update({ credits: newCredits }).eq('id', userId);
+
+    if (updateError) {
+        console.error(`❌ Error adding renewal credits for user ${userId}:`, updateError);
     } else {
         console.log(`  💎 Subscription renewed and credits ADDED: ${plan.name} (+${plan.credits}) for user ${userId} (Invoice: ${invoice.id})`);
+
+        // Register transaction log
+        await supabaseAdmin.from('credit_transactions').insert({
+            user_id: userId,
+            amount: plan.credits,
+            type: 'purchase',
+            description: transactionDesc
+        });
     }
 }
 
