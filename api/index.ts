@@ -255,7 +255,7 @@ app.get('/api/proxy-image', async (req, res) => {
 
         try {
             const urlObj = new URL(imageUrl);
-            const allowedDomains = ['tmpfiles.org', 'img.youtube.com', 'i.ytimg.com', 'googleapis.com', 'catbox.moe', 'aiquickdraw.com'];
+            const allowedDomains = ['tmpfiles.org', 'img.youtube.com', 'i.ytimg.com', 'googleapis.com', 'catbox.moe', 'aiquickdraw.com', 'kie.ai', 'kie-ai.com'];
             if (!allowedDomains.some(d => urlObj.hostname.endsWith(d))) {
                 return res.status(403).send('Domain not allowed');
             }
@@ -295,16 +295,30 @@ app.post('/api/upload-image', async (req, res) => {
         }
 
         const mime = matches[1];
+        const ext = mime.split('/')[1] || 'png';
         const imageBuffer = Buffer.from(matches[2], 'base64');
 
-        const id = Date.now().toString() + '-' + Math.random().toString(36).substring(2, 9);
-        imageCache.set(id, { buffer: imageBuffer, mime, expires: Date.now() + 5 * 60 * 1000 }); // Expires in 5 minutes
+        // Upload to catbox.moe (works on serverless, no memory persistence needed)
+        const formData = new FormData();
+        const blob = new Blob([imageBuffer], { type: mime });
+        formData.append('reqtype', 'fileupload');
+        formData.append('fileToUpload', blob, `image.${ext}`);
 
-        // Get server URL to construct the public link
-        const serverUrl = process.env.SERVER_URL || process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get('host')}`;
-        const url = `${serverUrl}/api/cached-image/${id}`;
+        const uploadRes = await fetch('https://catbox.moe/userapi.php', {
+            method: 'POST',
+            body: formData,
+        });
 
-        res.json({ url });
+        if (!uploadRes.ok) {
+            throw new Error(`Upload to catbox failed: ${uploadRes.status}`);
+        }
+
+        const directUrl = await uploadRes.text();
+        if (!directUrl || !directUrl.startsWith('http')) {
+            throw new Error('No URL in upload response');
+        }
+
+        res.json({ url: directUrl });
     } catch (err: any) {
         console.error('Upload error:', err);
         res.status(500).json({ error: err.message });
@@ -389,7 +403,8 @@ app.post('/api/start-generation', authenticateUser, async (req, res) => {
         const { fullPrompt, imageUrls } = req.body;
         const kieApiKey = process.env.KIE_API_KEY || process.env.VITE_KIE_API_KEY;
         const KIE_API_BASE = "https://api.kie.ai";
-        const serverUrl = process.env.SERVER_URL || process.env.RENDER_EXTERNAL_URL;
+        // Use explicit SERVER_URL or Vercel's auto-set URL for the callback
+        const serverUrl = process.env.SERVER_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `https://${req.get('host')}`);
 
         if (!kieApiKey) {
             return res.status(500).json({ error: 'KIE_API_KEY is not configured on the server' });
@@ -409,9 +424,7 @@ app.post('/api/start-generation', authenticateUser, async (req, res) => {
             },
         };
 
-        if (serverUrl) {
-            body.callBackUrl = `${serverUrl}/api/kie-callback`;
-        }
+        body.callBackUrl = `${serverUrl}/api/kie-callback`;
 
         const createResponse = await fetch(`${KIE_API_BASE}/api/v1/jobs/createTask`, {
             method: "POST",
