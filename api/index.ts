@@ -688,11 +688,13 @@ app.post('/api/customer-portal', authenticateUser, async (req, res) => {
 // ============================================
 
 async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
-    const userId = session.metadata?.supabase_user_id;
+    // Para Payment Links directos, el ID viene en client_reference_id.
+    // Para la API creada manualmente, viene en metadata.
+    const userId = session.client_reference_id || session.metadata?.supabase_user_id;
     const planKey = session.metadata?.plan_key;
 
     if (!userId || !planKey) {
-        console.error('❌ Missing metadata in checkout session:', session.id);
+        console.error('❌ Missing metadata or client_reference_id in checkout session:', session.id);
         return;
     }
 

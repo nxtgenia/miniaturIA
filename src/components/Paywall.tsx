@@ -29,40 +29,41 @@ const Paywall: React.FC<PaywallProps> = ({ onClose }) => {
     const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
     const hasSubscription = plan !== 'free';
 
+    // Mapa de enlaces de pago directos de Stripe (Payment Links)
+    const PAYMENT_LINKS: Record<string, string> = {
+        'pack_micro': 'https://buy.stripe.com/PONER_ENLACE_AQUI_MICRO',
+        'pack_basic': 'https://buy.stripe.com/PONER_ENLACE_AQUI_BASIC',
+        'pack_plus': 'https://buy.stripe.com/PONER_ENLACE_AQUI_PLUS',
+        'pack_boost': 'https://buy.stripe.com/PONER_ENLACE_AQUI_BOOST',
+        'pack_ultra': 'https://buy.stripe.com/PONER_ENLACE_AQUI_ULTRA',
+        'starter_monthly': 'https://buy.stripe.com/PONER_ENLACE_AQUI_STARTER_M',
+        'starter_annual': 'https://buy.stripe.com/PONER_ENLACE_AQUI_STARTER_A',
+        'pro_monthly': 'https://buy.stripe.com/PONER_ENLACE_AQUI_PRO_M',
+        'pro_annual': 'https://buy.stripe.com/PONER_ENLACE_AQUI_PRO_A',
+        'agency_monthly': 'https://buy.stripe.com/PONER_ENLACE_AQUI_AGENCY_M',
+        'agency_annual': 'https://buy.stripe.com/PONER_ENLACE_AQUI_AGENCY_A'
+    };
+
     const handleCheckout = async (planKey: string) => {
-        if (!user || !session?.access_token) return;
+        if (!user) return;
         setLoadingPlan(planKey);
 
-        try {
-            const response = await fetch(`${API_URL}/api/create-checkout-session`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    planKey,
-                    userId: user.id,
-                    userEmail: user.email,
-                    successUrl: `${window.location.origin}/app?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-                    cancelUrl: `${window.location.origin}/app?payment=cancelled`,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (data.url) {
-                window.location.href = data.url;
-            } else {
-                console.error('No checkout URL:', data.error);
-                alert('Error al crear el checkout. Inténtalo de nuevo.');
-            }
-        } catch (err: any) {
-            console.error('Checkout error detail:', err);
-            alert(`Error de conexión: ${err.message || 'Desconocido'}. Inténtalo de nuevo.`);
-        } finally {
+        const paymentLink = PAYMENT_LINKS[planKey];
+        if (!paymentLink) {
+            alert('Enlace de pago no configurado aún para este plan.');
             setLoadingPlan(null);
+            return;
         }
+
+        // Pasamos el ID del usuario como client_reference_id para poder darle los créditos luego por webhook
+        const url = new URL(paymentLink);
+        url.searchParams.set('client_reference_id', user.id);
+        url.searchParams.set('prefilled_email', user.email || '');
+
+        window.location.href = url.toString();
+
+        // Simular que está cargando mientras redirige
+        setTimeout(() => setLoadingPlan(null), 3000);
     };
 
     return (
