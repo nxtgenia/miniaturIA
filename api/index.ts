@@ -329,7 +329,7 @@ app.get('/api/youtube-search', async (req, res) => {
             title: v.title,
             author: v.author.name,
             views: v.views,
-            thumbnail: `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`,
+            thumbnail: `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`,
             url: v.url
         }));
 

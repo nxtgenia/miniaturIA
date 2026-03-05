@@ -52,6 +52,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, o
     if (thumb) {
       try {
         const response = await fetch(`${API_URL}/api/proxy-image?url=${encodeURIComponent(thumb)}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const blob = await response.blob();
         const reader = new FileReader();
         reader.onload = () => {
@@ -60,7 +61,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, o
           setError('');
         };
         reader.readAsDataURL(blob);
-      } catch (err) {
+      } catch (err: any) {
+        console.error('YouTube Thumbnail fetch error:', {
+          url: `${API_URL}/api/proxy-image?url=${encodeURIComponent(thumb)}`,
+          message: err.message,
+          stack: err.stack
+        });
         setError('No se pudo cargar la miniatura. Intenta subir el archivo directamente.');
       }
     } else {
@@ -71,6 +77,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, o
   const handleSearchSelect = async (thumbnailUrl: string) => {
     try {
       const response = await fetch(`${API_URL}/api/proxy-image?url=${encodeURIComponent(thumbnailUrl)}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const blob = await response.blob();
       const reader = new FileReader();
       reader.onload = () => {

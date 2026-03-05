@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { API_URL } from './config';
 import { supabase } from './supabase';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY;
 const KIE_API_BASE = "https://api.kie.ai";
 
 // Helper: Upload image via server-side proxy (much faster than browser upload)
@@ -119,7 +119,7 @@ export function getYouTubeThumbnail(url: string) {
   const match = url.match(regExp);
   if (match && match[2].length === 11) {
     const videoId = match[2];
-    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
   }
   return null;
 }
