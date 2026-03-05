@@ -16,35 +16,38 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Mapa de enlaces de pago directos de Stripe (Payment Links)
+    const PAYMENT_LINKS: Record<string, string> = {
+        'pack_micro': 'https://buy.stripe.com/fZu6oH8SFdIXc7Rfyq0RG00',
+        'pack_basic': 'https://buy.stripe.com/14AeVd7OB6gvefZdqi0RG01',
+        'pack_plus': 'https://buy.stripe.com/3cIeVd3yl7kzfk32LE0RG02',
+        'pack_boost': 'https://buy.stripe.com/28E3cv8SF6gv3Bl0Dw0RG03',
+        'pack_ultra': 'https://buy.stripe.com/7sY7sL7OB6gv3Bl2LE0RG04',
+        'starter_monthly': 'https://buy.stripe.com/9B600j1qd20f5Jt4TM0RG05',
+        'starter_annual': 'https://buy.stripe.com/6oU6oHd8V6gv9ZJae60RG06',
+        'pro_monthly': 'https://buy.stripe.com/dRmeVd1qdeN1go70Dw0RG07',
+        'pro_annual': 'https://buy.stripe.com/fZu5kD2uh6gv9ZJ9a20RG08',
+        'agency_monthly': 'https://buy.stripe.com/6oU14n5Gt0Wbc7Reum0RG09',
+        'agency_annual': 'https://buy.stripe.com/6oU00j4Cp6gvb3Nbia0RG0a'
+    };
+
     const handleStripeRedirect = async (userId: string, userEmail: string) => {
-        const token = session?.access_token;
-        if (!token) {
-            setError('Error: no hay sesión activa.');
+        const paymentLink = PAYMENT_LINKS[planKey];
+        if (!paymentLink) {
+            setError('Error: Enlace de pago no configurado aún para este plan.');
             setLoading(false);
             return;
         }
 
-        const response = await fetch(`${API_URL}/api/create-checkout-session`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                planKey,
-                userId,
-                userEmail,
-            }),
-        });
+        // Pasamos el ID del usuario como client_reference_id para poder darle los créditos luego por webhook
+        const url = new URL(paymentLink);
+        url.searchParams.set('client_reference_id', userId);
+        url.searchParams.set('prefilled_email', userEmail || '');
 
-        const data = await response.json();
+        window.location.href = url.toString();
 
-        if (data.url) {
-            window.location.href = data.url;
-        } else {
-            setError('Error al generar la pasarela de pago: ' + (data.error || 'Desconocido'));
-            setLoading(false);
-        }
+        // Simular que está cargando mientras redirige
+        setTimeout(() => setLoading(false), 3000);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
