@@ -255,7 +255,7 @@ app.get('/api/proxy-image', async (req, res) => {
 
         try {
             const urlObj = new URL(imageUrl);
-            const allowedDomains = ['tmpfiles.org', 'img.youtube.com', 'i.ytimg.com', 'googleapis.com', 'catbox.moe', 'aiquickdraw.com', 'kie.ai', 'kie-ai.com'];
+            const allowedDomains = ['tmpfiles.org', 'img.youtube.com', 'i.ytimg.com', 'googleapis.com', 'catbox.moe', 'aiquickdraw.com', 'kie.ai', 'kie-ai.com', 'litter.catbox.moe'];
             if (!allowedDomains.some(d => urlObj.hostname.endsWith(d))) {
                 return res.status(403).send('Domain not allowed');
             }
@@ -298,19 +298,20 @@ app.post('/api/upload-image', async (req, res) => {
         const ext = mime.split('/')[1] || 'png';
         const imageBuffer = Buffer.from(matches[2], 'base64');
 
-        // Upload to catbox.moe (works on serverless, no memory persistence needed)
+        // Upload to litterbox.catbox.moe (temp files, works on serverless)
         const formData = new FormData();
         const blob = new Blob([imageBuffer], { type: mime });
         formData.append('reqtype', 'fileupload');
+        formData.append('time', '1h');
         formData.append('fileToUpload', blob, `image.${ext}`);
 
-        const uploadRes = await fetch('https://catbox.moe/userapi.php', {
+        const uploadRes = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
             method: 'POST',
             body: formData,
         });
 
         if (!uploadRes.ok) {
-            throw new Error(`Upload to catbox failed: ${uploadRes.status}`);
+            throw new Error(`Upload failed: ${uploadRes.status}`);
         }
 
         const directUrl = await uploadRes.text();

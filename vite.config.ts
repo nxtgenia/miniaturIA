@@ -80,13 +80,14 @@ function imageProxyPlugin(): Plugin {
           const ext = mime.split('/')[1] || 'png';
           const imageBuffer = Buffer.from(matches[2], 'base64');
 
-          // Upload to catbox.moe from server (much faster)
+          // Upload to litterbox.catbox.moe (temp files)
           const formData = new FormData();
           const blob = new Blob([imageBuffer], { type: mime });
           formData.append('reqtype', 'fileupload');
+          formData.append('time', '1h');
           formData.append('fileToUpload', blob, `image.${ext}`);
 
-          const uploadRes = await fetch('https://catbox.moe/userapi.php', {
+          const uploadRes = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
             method: 'POST',
             body: formData,
           });
