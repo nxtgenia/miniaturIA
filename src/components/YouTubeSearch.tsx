@@ -50,6 +50,11 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({ onSelect }) => {
             setCurrentPage(page);
             setLastQuery(searchQuery);
         } catch (err: any) {
+            console.error('Fetch error details:', {
+                url: `${API_URL}/api/youtube-search?q=${encodeURIComponent(searchQuery)}&page=${page}`,
+                message: err.message,
+                stack: err.stack
+            });
             setError(err.message || 'Error desconocido');
         }
     };
