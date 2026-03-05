@@ -29,15 +29,25 @@ app.use(cors({
 }));
 
 // Stripe client
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2026-02-25.clover' as any,
-});
+let stripe: Stripe;
+try {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'dummy_key', {
+        apiVersion: '2026-02-25.clover' as any,
+    });
+} catch (e) {
+    console.error("Failed to initialize Stripe:", e);
+}
 
 // Supabase admin client (uses service role key for webhook operations)
-const supabaseAdmin = createClient(
-    process.env.VITE_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabaseAdmin: any;
+try {
+    supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || 'https://dummy.supabase.co',
+        process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy_key'
+    );
+} catch (e) {
+    console.error("Failed to initialize Supabase:", e);
+}
 
 // ============================================
 // PRODUCT / PRICE CONFIGURATION
@@ -151,6 +161,14 @@ async function initializeStripeProducts() {
 // ============================================
 // ROUTES
 // ============================================
+
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+        hasSupabase: !!process.env.VITE_SUPABASE_URL
+    });
+});
 
 // IMPORTANT: Webhook route must use raw body parser
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
