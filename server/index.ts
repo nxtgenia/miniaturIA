@@ -30,7 +30,7 @@ app.use(cors({
 
 // Stripe client
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-01-27.acacia' as any,
+    apiVersion: '2026-02-25.clover' as any,
 });
 
 // Supabase admin client (uses service role key for webhook operations)
@@ -493,9 +493,20 @@ app.post('/api/create-checkout-session', authenticateUser, async (req, res) => {
         return res.status(403).json({ error: 'Forbidden: userId mismatch' });
     }
 
-    const priceId = stripePriceIds[planKey];
+    let priceId = stripePriceIds[planKey];
     if (!priceId) {
-        return res.status(400).json({ error: `Plan "${planKey}" not found` });
+        // stripePriceIds may be empty if initializeStripeProducts() failed at startup (e.g. cold start).
+        // Retry initialization before giving up.
+        console.log(`⚠️  Price ID not found for "${planKey}", retrying product initialization...`);
+        try {
+            await initializeStripeProducts();
+            priceId = stripePriceIds[planKey];
+        } catch (err) {
+            console.error('❌ Retry of initializeStripeProducts failed:', err);
+        }
+        if (!priceId) {
+            return res.status(400).json({ error: `Plan "${planKey}" not found` });
+        }
     }
 
     const isSubscription = !planKey.startsWith('pack_');
@@ -592,13 +603,8 @@ app.post('/api/confirm-payment', authenticateUser, async (req, res) => {
         }
 
         if (session.payment_status === 'paid') {
-            if (session.mode === 'payment') {
-                await handleCheckoutComplete(session);
-            } else if (session.mode === 'subscription' && session.subscription) {
-                const sub = session.subscription as Stripe.Subscription;
-                const inv = sub.latest_invoice as Stripe.Invoice;
-                if (inv && inv.status === 'paid') await handleInvoicePaid(inv);
-            }
+            // handleCheckoutComplete now handles both packs AND subscriptions
+            await handleCheckoutComplete(session);
             return res.json({ success: true, status: 'paid' });
         }
 
@@ -696,27 +702,60 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
         const pack = CREDIT_PACKS[packName];
         if (!pack) return;
 
-        // Add credits manually in JS (to avoid RPC dependent failures)
         const { data: profile } = await supabaseAdmin.from('profiles').select('credits').eq('id', userId).single();
         const newCredits = (profile?.credits || 0) + pack.credits;
-
         const { error: updateError } = await supabaseAdmin.from('profiles').update({ credits: newCredits }).eq('id', userId);
 
         if (updateError) {
             console.error(`❌ Error adding credits for user ${userId}:`, updateError);
         } else {
             console.log(`  💰 Added ${pack.credits} credits to user ${userId}`);
-
-            // Register transaction log
             await supabaseAdmin.from('credit_transactions').insert({
-                user_id: userId,
-                amount: pack.credits,
-                type: 'purchase',
-                description: transactionDesc
+                user_id: userId, amount: pack.credits, type: 'purchase', description: transactionDesc
+            });
+        }
+    } else {
+        // Subscription: activate plan and add initial credits immediately from session metadata
+        // (don't wait for invoice.paid — that event may arrive late or fail on free-tier servers)
+        const plan = SUBSCRIPTION_PLANS[planKey as keyof typeof SUBSCRIPTION_PLANS];
+        if (!plan) {
+            console.error(`❌ Unknown plan key: ${planKey}`);
+            return;
+        }
+
+        const planName = planKey.split('_')[0];
+        const planPeriod = planKey.split('_')[1];
+
+        // Retrieve subscription ID if available (may not be expanded yet, that's ok)
+        let subscriptionId: string | null = null;
+        try {
+            if (session.subscription) {
+                subscriptionId = typeof session.subscription === 'string'
+                    ? session.subscription
+                    : session.subscription.id;
+            }
+        } catch { /* subscription may not be expanded */ }
+
+        await supabaseAdmin.from('profiles').update({
+            plan: planName,
+            plan_period: planPeriod,
+            ...(subscriptionId ? { stripe_subscription_id: subscriptionId } : {}),
+            updated_at: new Date().toISOString(),
+        }).eq('id', userId);
+
+        const { data: profile } = await supabaseAdmin.from('profiles').select('credits').eq('id', userId).single();
+        const newCredits = (profile?.credits || 0) + plan.credits;
+        const { error: updateError } = await supabaseAdmin.from('profiles').update({ credits: newCredits }).eq('id', userId);
+
+        if (updateError) {
+            console.error(`❌ Error adding subscription credits for user ${userId}:`, updateError);
+        } else {
+            console.log(`  💎 Subscription activated: ${plan.name} (+${plan.credits} credits) for user ${userId}`);
+            await supabaseAdmin.from('credit_transactions').insert({
+                user_id: userId, amount: plan.credits, type: 'purchase', description: transactionDesc
             });
         }
     }
-    // Subscription mode is usually followed by invoice.paid, so subscriptions handled there
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
@@ -828,4 +867,9 @@ async function start() {
     });
 }
 
-start();
+// Only start the server if this file is run directly (not via Vercel api/index.ts)
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    start();
+}
+
+export default app;
