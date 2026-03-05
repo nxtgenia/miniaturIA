@@ -31,17 +31,17 @@ const Paywall: React.FC<PaywallProps> = ({ onClose }) => {
 
     // Mapa de enlaces de pago directos de Stripe (Payment Links)
     const PAYMENT_LINKS: Record<string, string> = {
-        'pack_micro': 'https://buy.stripe.com/PONER_ENLACE_AQUI_MICRO',
-        'pack_basic': 'https://buy.stripe.com/PONER_ENLACE_AQUI_BASIC',
-        'pack_plus': 'https://buy.stripe.com/PONER_ENLACE_AQUI_PLUS',
-        'pack_boost': 'https://buy.stripe.com/PONER_ENLACE_AQUI_BOOST',
-        'pack_ultra': 'https://buy.stripe.com/PONER_ENLACE_AQUI_ULTRA',
-        'starter_monthly': 'https://buy.stripe.com/PONER_ENLACE_AQUI_STARTER_M',
-        'starter_annual': 'https://buy.stripe.com/PONER_ENLACE_AQUI_STARTER_A',
-        'pro_monthly': 'https://buy.stripe.com/PONER_ENLACE_AQUI_PRO_M',
-        'pro_annual': 'https://buy.stripe.com/PONER_ENLACE_AQUI_PRO_A',
-        'agency_monthly': 'https://buy.stripe.com/PONER_ENLACE_AQUI_AGENCY_M',
-        'agency_annual': 'https://buy.stripe.com/PONER_ENLACE_AQUI_AGENCY_A'
+        'pack_micro': 'https://buy.stripe.com/fZu6oH8SFdIXc7Rfyq0RG00',
+        'pack_basic': 'https://buy.stripe.com/14AeVd7OB6gvefZdqi0RG01',
+        'pack_plus': 'https://buy.stripe.com/3cIeVd3yl7kzfk32LE0RG02',
+        'pack_boost': 'https://buy.stripe.com/28E3cv8SF6gv3Bl0Dw0RG03',
+        'pack_ultra': 'https://buy.stripe.com/7sY7sL7OB6gv3Bl2LE0RG04',
+        'starter_monthly': 'https://buy.stripe.com/9B600j1qd20f5Jt4TM0RG05',
+        'starter_annual': 'https://buy.stripe.com/6oU6oHd8V6gv9ZJae60RG06',
+        'pro_monthly': 'https://buy.stripe.com/dRmeVd1qdeN1go70Dw0RG07',
+        'pro_annual': 'https://buy.stripe.com/fZu5kD2uh6gv9ZJ9a20RG08',
+        'agency_monthly': 'https://buy.stripe.com/6oU14n5Gt0Wbc7Reum0RG09',
+        'agency_annual': 'https://buy.stripe.com/6oU00j4Cp6gvb3Nbia0RG0a'
     };
 
     const handleCheckout = async (planKey: string) => {
