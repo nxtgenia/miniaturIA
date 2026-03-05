@@ -381,7 +381,7 @@ app.post('/api/start-generation', authenticateUser, async (req, res) => {
         }
 
         const body: any = {
-            model: "nano-banana-2",
+            model: "nano-banana-pro",
             input: {
                 prompt: fullPrompt,
                 image_input: imageUrls,
