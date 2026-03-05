@@ -263,7 +263,16 @@ app.get('/api/proxy-image', async (req, res) => {
             return res.status(400).send('Invalid URL');
         }
 
-        const response = await fetch(imageUrl);
+        let response = await fetch(imageUrl);
+
+        // Automatic fallback for YouTube thumbnails without letterboxing (black bars)
+        if (!response.ok && imageUrl.includes('img.youtube.com') && imageUrl.includes('maxresdefault.jpg')) {
+            response = await fetch(imageUrl.replace('maxresdefault.jpg', 'hq720.jpg'));
+            if (!response.ok) {
+                response = await fetch(imageUrl.replace('maxresdefault.jpg', 'mqdefault.jpg'));
+            }
+        }
+
         if (!response.ok) {
             return res.status(response.status).send(`Failed to fetch image: ${response.statusText}`);
         }
@@ -344,7 +353,7 @@ app.get('/api/youtube-search', async (req, res) => {
             title: v.title,
             author: v.author.name,
             views: v.views,
-            thumbnail: `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`,
+            thumbnail: `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`,
             url: v.url
         }));
 

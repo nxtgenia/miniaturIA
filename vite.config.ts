@@ -21,7 +21,15 @@ function imageProxyPlugin(): Plugin {
             return;
           }
 
-          const response = await fetch(imageUrl);
+          let response = await fetch(imageUrl);
+
+          if (!response.ok && imageUrl.includes('img.youtube.com') && imageUrl.includes('maxresdefault.jpg')) {
+            response = await fetch(imageUrl.replace('maxresdefault.jpg', 'hq720.jpg'));
+            if (!response.ok) {
+              response = await fetch(imageUrl.replace('maxresdefault.jpg', 'mqdefault.jpg'));
+            }
+          }
+
           if (!response.ok) {
             res.statusCode = response.status;
             res.end(`Failed to fetch image: ${response.statusText}`);

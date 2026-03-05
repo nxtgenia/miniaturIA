@@ -119,7 +119,7 @@ export function getYouTubeThumbnail(url: string) {
   const match = url.match(regExp);
   if (match && match[2].length === 11) {
     const videoId = match[2];
-    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
   }
   return null;
 }
