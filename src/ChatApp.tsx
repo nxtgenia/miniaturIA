@@ -147,6 +147,12 @@ export default function App() {
         if (data && (data.credits > initialStoreCredits || data.plan !== 'free' || attempts >= 15)) {
           clearInterval(interval);
           await refreshCredits();
+
+          // Registrar compra en el Píxel de Meta (Frontend)
+          if (typeof window !== 'undefined' && (window as any).fbq) {
+            (window as any).fbq('track', 'Purchase', { currency: 'EUR', value: 10 });
+          }
+
           setIsVerifyingPayment(false);
           // Clean up URL
           const newParams = new URLSearchParams(searchParams);
