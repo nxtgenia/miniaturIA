@@ -724,6 +724,34 @@ app.post('/api/customer-portal', authenticateUser, async (req, res) => {
         });
         res.json({ url: portalSession.url });
     } catch (err: any) {
+        // If Stripe says the customer doesn't exist, they were probably deleted in the Stripe dashboard
+        if (err.message && err.message.includes('No such customer')) {
+            // Unlink the broken customer from Supabase so the email fallback runs next time
+            await supabaseAdmin.from('profiles').update({ stripe_customer_id: null }).eq('id', userId);
+
+            // Re-attempt by searching email
+            const email = (req as any).user.email;
+            if (email) {
+                try {
+                    const customers = await stripe.customers.search({
+                        query: `email:"${email}"`,
+                        limit: 1
+                    });
+                    if (customers.data.length > 0) {
+                        const newId = customers.data[0].id;
+                        await supabaseAdmin.from('profiles').update({ stripe_customer_id: newId }).eq('id', userId);
+                        const retrySession = await stripe.billingPortal.sessions.create({
+                            customer: newId,
+                            return_url: `${req.headers.origin}/app`,
+                        });
+                        return res.json({ url: retrySession.url });
+                    }
+                } catch (searchErr) {
+                    console.error('Error in fallback customer search:', searchErr);
+                }
+            }
+            return res.status(400).json({ error: 'No se encontraron datos de facturación activos. Si acabas de pagar, espera unos minutos y prueba de nuevo.' });
+        }
         res.status(500).json({ error: err.message });
     }
 });
