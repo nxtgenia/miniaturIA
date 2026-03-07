@@ -691,13 +691,35 @@ app.post('/api/customer-portal', authenticateUser, async (req, res) => {
         .eq('id', userId)
         .single();
 
-    if (!profile?.stripe_customer_id) {
-        return res.status(400).json({ error: 'No Stripe customer found' });
+    let customerId = profile?.stripe_customer_id;
+
+    if (!customerId) {
+        // Fallback: search customer in Stripe by email
+        const email = (req as any).user.email;
+        if (email) {
+            try {
+                const customers = await stripe.customers.search({
+                    query: `email:"${email}"`,
+                    limit: 1
+                });
+                if (customers.data.length > 0) {
+                    customerId = customers.data[0].id;
+                    // Save it to database for next time
+                    await supabaseAdmin.from('profiles').update({ stripe_customer_id: customerId }).eq('id', userId);
+                }
+            } catch (err) {
+                console.error('Error searching stripe customers:', err);
+            }
+        }
+    }
+
+    if (!customerId) {
+        return res.status(400).json({ error: 'Debes realizar al menos un pago o suscripción para poder acceder al portal de facturación.' });
     }
 
     try {
         const portalSession = await stripe.billingPortal.sessions.create({
-            customer: profile.stripe_customer_id,
+            customer: customerId,
             return_url: `${req.headers.origin}/app`,
         });
         res.json({ url: portalSession.url });
@@ -738,6 +760,12 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
     }
 
     console.log(`✅ Processing checkout: user=${userId}, plan=${planKey} (Session: ${session.id})`);
+
+    // Ensure customer ID is saved
+    const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+    if (customerId) {
+        await supabaseAdmin.from('profiles').update({ stripe_customer_id: customerId }).eq('id', userId);
+    }
 
     // Credit pack purchase (one-time)
     if (planKey.startsWith('pack_')) {
