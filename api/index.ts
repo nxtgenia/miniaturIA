@@ -694,7 +694,7 @@ app.post('/api/customer-portal', authenticateUser, async (req, res) => {
     let customerId = profile?.stripe_customer_id;
 
     if (!customerId) {
-        // Fallback: search customer in Stripe by email
+        // Fallback: search customer in Stripe by email or create one
         const email = (req as any).user.email;
         if (email) {
             try {
@@ -704,17 +704,25 @@ app.post('/api/customer-portal', authenticateUser, async (req, res) => {
                 });
                 if (customers.data.length > 0) {
                     customerId = customers.data[0].id;
-                    // Save it to database for next time
+                } else {
+                    const newCustomer = await stripe.customers.create({
+                        email: email,
+                        metadata: { supabase_user_id: userId }
+                    });
+                    customerId = newCustomer.id;
+                }
+
+                if (customerId) {
                     await supabaseAdmin.from('profiles').update({ stripe_customer_id: customerId }).eq('id', userId);
                 }
             } catch (err) {
-                console.error('Error searching stripe customers:', err);
+                console.error('Error searching/creating stripe customers:', err);
             }
         }
     }
 
     if (!customerId) {
-        return res.status(400).json({ error: 'Debes realizar al menos un pago o suscripción para poder acceder al portal de facturación.' });
+        return res.status(400).json({ error: 'No se encontraron datos de facturación activos. Si acabas de pagar, espera unos minutos y prueba de nuevo.' });
     }
 
     try {
@@ -731,6 +739,8 @@ app.post('/api/customer-portal', authenticateUser, async (req, res) => {
 
             // Re-attempt by searching email
             const email = (req as any).user.email;
+            let newId = null;
+
             if (email) {
                 try {
                     const customers = await stripe.customers.search({
@@ -738,18 +748,29 @@ app.post('/api/customer-portal', authenticateUser, async (req, res) => {
                         limit: 1
                     });
                     if (customers.data.length > 0) {
-                        const newId = customers.data[0].id;
-                        await supabaseAdmin.from('profiles').update({ stripe_customer_id: newId }).eq('id', userId);
-                        const retrySession = await stripe.billingPortal.sessions.create({
-                            customer: newId,
-                            return_url: `${req.headers.origin}/app`,
+                        newId = customers.data[0].id;
+                    } else {
+                        // Create a new empty customer so they can at least enter the portal and see/add details
+                        const newCustomer = await stripe.customers.create({
+                            email: email,
+                            metadata: { supabase_user_id: userId }
                         });
-                        return res.json({ url: retrySession.url });
+                        newId = newCustomer.id;
                     }
                 } catch (searchErr) {
-                    console.error('Error in fallback customer search:', searchErr);
+                    console.error('Error in fallback customer search/create:', searchErr);
                 }
             }
+
+            if (newId) {
+                await supabaseAdmin.from('profiles').update({ stripe_customer_id: newId }).eq('id', userId);
+                const retrySession = await stripe.billingPortal.sessions.create({
+                    customer: newId,
+                    return_url: `${req.headers.origin}/app`,
+                });
+                return res.json({ url: retrySession.url });
+            }
+
             return res.status(400).json({ error: 'No se encontraron datos de facturación activos. Si acabas de pagar, espera unos minutos y prueba de nuevo.' });
         }
         res.status(500).json({ error: err.message });
