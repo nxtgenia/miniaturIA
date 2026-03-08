@@ -128,9 +128,17 @@ const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void 
                     <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-4">
                         Elige tu plan y empieza a <span className="text-[#ff0000]">escalar</span> hoy
                     </h2>
-                    <p className="text-[#a1a1aa] text-lg mb-10">
+                    <p className="text-[#a1a1aa] text-lg mb-4 max-w-2xl mx-auto">
+                        Un freelance cobra entre 50€ y 150€ por UNA sola miniatura. Con MiniaturIA generas <strong className="text-white">todas las que necesites al instante</strong> por una fracción de ese precio.
+                    </p>
+                    <p className="text-[#555] text-sm mb-10">
                         10 créditos = 1 miniatura generada. Cancela o pausa cuando quieras.
                     </p>
+
+                    {/* Guarantee Badge */}
+                    <div className="flex items-center justify-center gap-2 text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-5 py-2.5 rounded-full mb-8 shadow-lg">
+                        <CheckCircle2 className="w-5 h-5" /> Garantía de 7 días: Prueba sin riesgo
+                    </div>
 
                     {/* Toggle Monthly / Annual */}
                     <div className="inline-flex items-center bg-[#141414] border border-[#1e1e1e] rounded-full p-1.5 gap-1">
@@ -236,7 +244,7 @@ const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void 
                                     ? 'bg-[#ff0000] hover:bg-[#cc0000] text-white shadow-[0_0_25px_rgba(255,0,0,0.3)] hover:shadow-[0_0_35px_rgba(255,0,0,0.5)]'
                                     : 'bg-[#1e1e1e] hover:bg-[#2a2a2a] text-white border border-[#2a2a2a]'
                                     }`}>
-                                Empezar ahora <ArrowRight className="w-4 h-4" />
+                                Quiero más clics en mis vídeos <ArrowRight className="w-4 h-4" />
                             </button>
 
                             <div className="mt-4 flex items-center justify-center gap-3 text-[10px] text-[#555] font-medium">
@@ -342,7 +350,7 @@ export default function Landing() {
                         className="flex flex-col items-center gap-3 mb-8"
                     >
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ff0000]/10 border border-[#ff0000]/20 text-[#ff0000] text-xs font-semibold uppercase tracking-wider">
-                            <Zap className="w-3.5 h-3.5" /> La herramienta secreta de los YouTubers más TOP
+                            <Zap className="w-3.5 h-3.5" /> Para canales de Finanzas, Gaming, Vlogs y Educación
                         </div>
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest animate-pulse">
                             🔥 Precio especial de lanzamiento
@@ -364,7 +372,7 @@ export default function Landing() {
                         transition={{ duration: 0.5, delay: 0.2 }}
                         className="text-lg md:text-xl text-[#a1a1aa] max-w-2xl mb-12"
                     >
-                        Multiplica tu CTR x3 usando IA. Analizamos lo que funciona en YouTube y generamos miniaturas y títulos virales en segundos para tus vídeos.
+                        Tu miniatura decide si tu video existe o no. La mayoría de creadores la están haciendo mal — y ni lo saben. Multiplica tu CTR usando la IA experta en YouTube.
                     </motion.p>
 
                     <motion.div
@@ -420,7 +428,7 @@ export default function Landing() {
                             className="w-full sm:w-auto glow-btn px-12 py-5 rounded-2xl text-lg font-black flex items-center justify-center gap-3 transform hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,0,0,0.3)] hover:shadow-[0_0_40px_rgba(255,0,0,0.5)]"
                         >
                             <Sparkles className="w-6 h-6" />
-                            Comprar Ahora
+                            Generar mi primera miniatura viral &rarr;
                         </a>
                     </motion.div>
                 </section>
@@ -482,15 +490,15 @@ export default function Landing() {
                             <div className="bg-white rounded-2xl p-6 md:p-8 space-y-6 my-8 shadow-sm border border-black/5">
                                 <div className="flex gap-4 items-start">
                                     <span className="text-2xl mt-1">⏳</span>
-                                    <p><strong className="text-black">Pierdes horas</strong> buscando la idea perfecta y diseñando en Photoshop a mano para lograr resultados mediocres.</p>
-                                </div>
-                                <div className="flex gap-4 items-start">
-                                    <span className="text-2xl mt-1">🎲</span>
-                                    <p><strong className="text-black">Testeas poco</strong> (1 miniatura por vídeo) y rezas para que funcione, jugándotela a la ruleta rusa con tu canal.</p>
+                                    <p><strong className="text-black">Dinero y tiempo quemado:</strong> ¿Cuántas horas pierdes buscando diseñadores freelance caros que tardan días en entregarte una imagen?</p>
                                 </div>
                                 <div className="flex gap-4 items-start">
                                     <span className="text-2xl mt-1">📉</span>
-                                    <p><strong className="text-black">No tienes datos reales</strong> porque nunca tienes volumen de variantes A/B suficiente para saber qué gusta.</p>
+                                    <p><strong className="text-black">Vistas perdidas:</strong> ¿Cuántos miles de visualizaciones perdió tu último vídeo simplemente porque la miniatura no era lo suficientemente magnética?</p>
+                                </div>
+                                <div className="flex gap-4 items-start">
+                                    <span className="text-2xl mt-1">🎲</span>
+                                    <p><strong className="text-black">Cero testing:</strong> Subes tu única miniatura y rezas para que funcione. Estás jugándotela a la ruleta rusa con el éxito de tu canal.</p>
                                 </div>
                             </div>
 
@@ -677,8 +685,20 @@ export default function Landing() {
                         <div className="space-y-4">
                             {[
                                 {
+                                    q: "¿Qué hace exactamente la IA de MiniaturIA?",
+                                    a: "Nuestra IA analiza los patrones de los canales con mayor CTR. Al subir una foto base (típicamente una captura tuya), la IA aplica un modelo de Image-to-Image. Elimina automáticamente el fondo, mejora la saturación y el contraste para igualar estándares hiper-clickables (estilo MrBeast), y añade el contexto visual que le pidas por chat (explosiones, gráficas de subida, efectos de luz neon)."
+                                },
+                                {
+                                    q: "¿Funciona para mi nicho específico (Gaming, Finanzas, Vlogs...)?",
+                                    a: "Sí. Nuestra IA está entrenada con miles de miniaturas virales separadas por categorías. Si eres de finanzas, entenderá que necesitas gráficos verdes y caras de urgencia. Si eres de gaming, te generará colores saturados y personajes en 3D impactantes. Se adapta a la estética literal de tu nicho."
+                                },
+                                {
+                                    q: "¿Tengo algún tipo de garantía si no me gusta?",
+                                    a: "Por supuesto. Cuentas con nuestra Garantía de 7 Días. Puedes entrar, probar la herramienta, generar tus primeras miniaturas, y si no ves que tu CTR tiene el potencial de subir, o no te convence el flujo de trabajo, nos envías un correo y te reembolsamos tu dinero sin hacer preguntas."
+                                },
+                                {
                                     q: "¿De verdad vale la pena pagar por esto si puedo usar Canva o Photoshop gratis?",
-                                    a: "Claro que puedes. Y seguirás tardando 2-4 horas por miniatura con Photoshop, probando una sola versión por vídeo, y rezando para que funcione. Con MiniaturIA generas una miniatura profesional en 30 segundos. En el tiempo que tardas en abrir Photoshop, ya tienes 5 opciones listas para testear. No compites contra Canva: compites contra los canales que ya usan IA para iterar más rápido que tú. La pregunta es cuánto te cuesta en views NO usarla."
+                                    a: "Claro que puedes. Y seguirás tardando 2-4 horas por miniatura con Photoshop, probando una sola versión por vídeo, y rezando para que funcione. Con MiniaturIA generas una miniatura profesional en 30 segundos. En el tiempo que tardas en abrir Photoshop, ya tienes 5 opciones listas para testear."
                                 },
                                 {
                                     q: "Ya tengo un diseñador, ¿para qué necesito MiniaturIA?",
@@ -721,7 +741,7 @@ export default function Landing() {
                     <div className="max-w-4xl mx-auto text-center relative z-10">
                         <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight">El próximo millón de views empieza con la miniatura.</h2>
                         <button onClick={scrollToPricing} className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black hover:bg-black hover:text-white border hover:border-white rounded-full text-base font-bold transition-all transform hover:scale-105 shadow-xl">
-                            <Sparkles className="w-5 h-5" /> Entrar a MiniaturIA Hoy
+                            <Sparkles className="w-5 h-5" /> Generar mi primera miniatura viral &rarr;
                         </button>
                     </div>
                 </section>
