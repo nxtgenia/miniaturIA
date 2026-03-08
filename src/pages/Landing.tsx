@@ -137,7 +137,7 @@ const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void 
 
                     {/* Guarantee Badge */}
                     <div className="flex items-center justify-center gap-2 text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-5 py-2.5 rounded-full mb-8 shadow-lg">
-                        <CheckCircle2 className="w-5 h-5" /> Garantía de 7 días: Prueba sin riesgo
+                        <CheckCircle2 className="w-5 h-5" /> Garantía Técnica: Si la IA falla, te devolvemos el 100%
                     </div>
 
                     {/* Toggle Monthly / Annual */}
@@ -693,8 +693,8 @@ export default function Landing() {
                                     a: "Sí. Nuestra IA está entrenada con miles de miniaturas virales separadas por categorías. Si eres de finanzas, entenderá que necesitas gráficos verdes y caras de urgencia. Si eres de gaming, te generará colores saturados y personajes en 3D impactantes. Se adapta a la estética literal de tu nicho."
                                 },
                                 {
-                                    q: "¿Tengo algún tipo de garantía si no me gusta?",
-                                    a: "Por supuesto. Cuentas con nuestra Garantía de 7 Días. Puedes entrar, probar la herramienta, generar tus primeras miniaturas, y si no ves que tu CTR tiene el potencial de subir, o no te convence el flujo de trabajo, nos envías un correo y te reembolsamos tu dinero sin hacer preguntas."
+                                    q: "¿Qué garantía tengo si algo no funciona?",
+                                    a: "Nuestra garantía es 100% técnica y transparente: Si en algún momento la aplicación experimenta fallos técnicos que te impidan utilizar la herramienta o consumir tus créditos para generar miniaturas, contacta a nuestro equipo de soporte. Revisaremos tu caso de inmediato y, si efectivamente es un fallo de nuestra plataforma, procederemos a devolverte el 100% de tu dinero de ese mes. Tú nos pagas por resultados y rendimiento, y esa es nuestra prioridad."
                                 },
                                 {
                                     q: "¿De verdad vale la pena pagar por esto si puedo usar Canva o Photoshop gratis?",
