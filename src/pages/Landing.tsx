@@ -350,7 +350,7 @@ export default function Landing() {
                         className="flex flex-col items-center gap-3 mb-8"
                     >
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ff0000]/10 border border-[#ff0000]/20 text-[#ff0000] text-xs font-semibold uppercase tracking-wider">
-                            <Zap className="w-3.5 h-3.5" /> Para canales de Finanzas, Gaming, Vlogs y Educación
+                            <Zap className="w-3.5 h-3.5" /> La herramienta secreta de los YouTubers más TOP
                         </div>
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest animate-pulse">
                             🔥 Precio especial de lanzamiento
