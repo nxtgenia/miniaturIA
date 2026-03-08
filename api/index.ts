@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import ytSearch from 'yt-search';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -876,8 +877,46 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
             });
         }
     }
-}
+    // Send Conversion to Meta CAPI
+    const metaToken = process.env.META_CAPI_TOKEN;
+    const pixelId = process.env.META_PIXEL_ID || '1457164502484998';
+    if (metaToken && session.amount_total) {
+        try {
+            const hash = (val: string) => crypto.createHash('sha256').update(val.trim().toLowerCase()).digest('hex');
+            const email = session.customer_details?.email ? hash(session.customer_details.email) : undefined;
+            const phone = session.customer_details?.phone ? hash(session.customer_details.phone.replace(/[\D]/g, '')) : undefined;
 
+            const userData: any = {};
+            if (email) userData.em = [email];
+            if (phone) userData.ph = [phone];
+            // Para CAPI es recomendable el client_ip y user_agent, pero al ser webhook de Stripe no tenemos el req del cliente original. Envío de purchase con email es suficiente.
+
+            const eventData = {
+                data: [{
+                    event_name: 'Purchase',
+                    event_time: Math.floor(Date.now() / 1000),
+                    action_source: 'website',
+                    user_data: userData,
+                    custom_data: {
+                        currency: session.currency || 'eur',
+                        value: session.amount_total / 100, // Stripe envía en céntimos
+                        content_name: planKey
+                    }
+                }]
+            };
+
+            const metaRes = await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${metaToken}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(eventData)
+            });
+            const text = await metaRes.text();
+            console.log(`📈 [Meta CAPI] Purchase event sent for ${userId} (${planKey}):`, text);
+        } catch (e: any) {
+            console.error('❌ [Meta CAPI] Error:', e.message);
+        }
+    }
+}
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
     const subscriptionId = (invoice as any).subscription as string;
     if (!subscriptionId) return;
