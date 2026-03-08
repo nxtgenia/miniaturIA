@@ -137,7 +137,7 @@ const PricingSection = ({ onSelectPlan }: { onSelectPlan: (key: string) => void 
 
                     {/* Guarantee Badge */}
                     <div className="flex items-center justify-center gap-2 text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-5 py-2.5 rounded-full mb-8 shadow-lg">
-                        <CheckCircle2 className="w-5 h-5" /> Garantía Técnica: Si la IA falla, te devolvemos el 100%
+                        <CheckCircle2 className="w-5 h-5" /> Garantía Técnica de 72h: Si la IA falla, te devolvemos el 100%
                     </div>
 
                     {/* Toggle Monthly / Annual */}
@@ -694,7 +694,7 @@ export default function Landing() {
                                 },
                                 {
                                     q: "¿Qué garantía tengo si algo no funciona?",
-                                    a: "Nuestra garantía es 100% técnica y transparente: Si en algún momento la aplicación experimenta fallos técnicos que te impidan utilizar la herramienta o consumir tus créditos para generar miniaturas, contacta a nuestro equipo de soporte. Revisaremos tu caso de inmediato y, si efectivamente es un fallo de nuestra plataforma, procederemos a devolverte el 100% de tu dinero de ese mes. Tú nos pagas por resultados y rendimiento, y esa es nuestra prioridad."
+                                    a: "Nuestra garantía es 100% técnica y transparente: Si durante las primeras 72 horas la aplicación experimenta fallos técnicos que te impidan utilizar la herramienta o consumir tus créditos para generar miniaturas, contacta a nuestro equipo de soporte. Revisaremos tu caso de inmediato y, si efectivamente es un fallo de nuestra plataforma, procederemos a devolverte el 100% de tu pago. Tú nos pagas por resultados y rendimiento."
                                 },
                                 {
                                     q: "¿De verdad vale la pena pagar por esto si puedo usar Canva o Photoshop gratis?",
