@@ -33,8 +33,33 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelected, o
     const file = acceptedFiles[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
-        selectImage(reader.result as string, 'upload');
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Compress the image before passing it as base64 to avoid Vercel 4.5MB limit (Error 413)
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Max dimension 1280px to safely stay under ~1-2MB
+          const MAX_SIZE = 1280;
+          if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+          selectImage(compressedBase64, 'upload');
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
