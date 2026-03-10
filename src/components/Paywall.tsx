@@ -60,6 +60,14 @@ const Paywall: React.FC<PaywallProps> = ({ onClose }) => {
         url.searchParams.set('client_reference_id', user.id);
         url.searchParams.set('prefilled_email', user.email || '');
 
+        // Recoger UTMs de Facebook Ads/Google Ads y pasarlos a Stripe
+        const currentUrlParams = new URLSearchParams(window.location.search);
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(param => {
+            if (currentUrlParams.has(param)) {
+                url.searchParams.set(param, currentUrlParams.get(param)!);
+            }
+        });
+
         window.location.href = url.toString();
 
         // Simular que está cargando mientras redirige

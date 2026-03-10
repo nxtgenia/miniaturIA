@@ -44,6 +44,14 @@ export default function CheckoutSignupModal({ planKey, onClose }: CheckoutSignup
         url.searchParams.set('client_reference_id', userId);
         url.searchParams.set('prefilled_email', userEmail || '');
 
+        // Recoger UTMs de Facebook Ads/Google Ads y pasarlos a Stripe
+        const currentUrlParams = new URLSearchParams(window.location.search);
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(param => {
+            if (currentUrlParams.has(param)) {
+                url.searchParams.set(param, currentUrlParams.get(param)!);
+            }
+        });
+
         window.location.href = url.toString();
 
         // Simular que está cargando mientras redirige
