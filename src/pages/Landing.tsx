@@ -445,8 +445,8 @@ export default function Landing() {
                             <div className="animate-marquee gap-4">
                                 {/* Duplicate the array for a seamless loop */}
                                 {[
-                                    '/thumb_ejemplo_1.jpg', '/thumb_ejemplo_2.jpg', '/thumb_ejemplo_3.jpg', '/thumb_ejemplo_4.jpg', '/thumb_ejemplo_5.jpg',
-                                    '/thumb_ejemplo_1.jpg', '/thumb_ejemplo_2.jpg', '/thumb_ejemplo_3.jpg', '/thumb_ejemplo_4.jpg', '/thumb_ejemplo_5.jpg'
+                                    '/thumb_ejemplo_1.jpg', '/results/1.jpg', '/thumb_ejemplo_2.jpg', '/results/2.jpg', '/thumb_ejemplo_3.jpg', '/results/3.jpg', '/thumb_ejemplo_4.jpg', '/results/4.png', '/thumb_ejemplo_5.jpg',
+                                    '/thumb_ejemplo_1.jpg', '/results/1.jpg', '/thumb_ejemplo_2.jpg', '/results/2.jpg', '/thumb_ejemplo_3.jpg', '/results/3.jpg', '/thumb_ejemplo_4.jpg', '/results/4.png', '/thumb_ejemplo_5.jpg'
                                 ].map((src, i) => (
                                     <div
                                         key={`row1-${i}`}
@@ -464,8 +464,8 @@ export default function Landing() {
                             <div className="animate-marquee-reverse gap-4">
                                 {/* Duplicate the array for a seamless loop, reversed order */}
                                 {[
-                                    '/thumb_ejemplo_5.jpg', '/thumb_ejemplo_4.jpg', '/thumb_ejemplo_3.jpg', '/thumb_ejemplo_2.jpg', '/thumb_ejemplo_1.jpg',
-                                    '/thumb_ejemplo_5.jpg', '/thumb_ejemplo_4.jpg', '/thumb_ejemplo_3.jpg', '/thumb_ejemplo_2.jpg', '/thumb_ejemplo_1.jpg'
+                                    '/thumb_ejemplo_5.jpg', '/results/4.png', '/thumb_ejemplo_4.jpg', '/results/3.jpg', '/thumb_ejemplo_3.jpg', '/results/2.jpg', '/thumb_ejemplo_2.jpg', '/results/1.jpg', '/thumb_ejemplo_1.jpg',
+                                    '/thumb_ejemplo_5.jpg', '/results/4.png', '/thumb_ejemplo_4.jpg', '/results/3.jpg', '/thumb_ejemplo_3.jpg', '/results/2.jpg', '/thumb_ejemplo_2.jpg', '/results/1.jpg', '/thumb_ejemplo_1.jpg'
                                 ].map((src, i) => (
                                     <div
                                         key={`row2-${i}`}
