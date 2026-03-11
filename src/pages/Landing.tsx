@@ -441,7 +441,7 @@ export default function Landing() {
                                 Miniaturas para YouTube generadas con nuestra <span className="text-[#ff0000]">IA</span>
                             </h2>
                         </div>
-                        <div className="relative w-full overflow-hidden mask-fade-edges py-4">
+                        <div className="relative w-full overflow-hidden mask-fade-edges py-4 flex flex-col gap-4">
                             <div className="animate-marquee gap-4">
                                 {/* Duplicate the array for a seamless loop */}
                                 {[
@@ -449,7 +449,26 @@ export default function Landing() {
                                     '/thumb_ejemplo_1.jpg', '/thumb_ejemplo_2.jpg', '/thumb_ejemplo_3.jpg', '/thumb_ejemplo_4.jpg', '/thumb_ejemplo_5.jpg'
                                 ].map((src, i) => (
                                     <div
-                                        key={i}
+                                        key={`row1-${i}`}
+                                        className="w-[280px] md:w-[350px] shrink-0 aspect-video rounded-xl overflow-hidden border border-[#2a2a2a] bg-[#141414] shadow-lg cursor-pointer group hover:border-[#ff0000]/50 transition-colors"
+                                    >
+                                        <img
+                                            src={src}
+                                            alt={`Ejemplo de miniatura generada con IA para YouTube ${i + 1}`}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="animate-marquee-reverse gap-4">
+                                {/* Duplicate the array for a seamless loop, reversed order */}
+                                {[
+                                    '/thumb_ejemplo_5.jpg', '/thumb_ejemplo_4.jpg', '/thumb_ejemplo_3.jpg', '/thumb_ejemplo_2.jpg', '/thumb_ejemplo_1.jpg',
+                                    '/thumb_ejemplo_5.jpg', '/thumb_ejemplo_4.jpg', '/thumb_ejemplo_3.jpg', '/thumb_ejemplo_2.jpg', '/thumb_ejemplo_1.jpg'
+                                ].map((src, i) => (
+                                    <div
+                                        key={`row2-${i}`}
                                         className="w-[280px] md:w-[350px] shrink-0 aspect-video rounded-xl overflow-hidden border border-[#2a2a2a] bg-[#141414] shadow-lg cursor-pointer group hover:border-[#ff0000]/50 transition-colors"
                                     >
                                         <img
