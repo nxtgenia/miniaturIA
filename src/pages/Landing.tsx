@@ -1,6 +1,6 @@
 import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Sparkles, Youtube, Layers, Type, Zap, CheckCircle2, Bot, PlayCircle, Image as ImageIcon, Download, TrendingDown, Clock, SearchX, Lock, ArrowRight, Star, ChevronDown, MessageSquare } from 'lucide-react';
+import { Sparkles, Youtube, Layers, Type, Zap, CheckCircle2, Bot, PlayCircle, Image as ImageIcon, Download, TrendingDown, Clock, SearchX, Lock, ArrowRight, Star, ChevronDown, MessageSquare, MessageCircle } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import CheckoutSignupModal from '../components/CheckoutSignupModal';
@@ -791,6 +791,20 @@ export default function Landing() {
                     onClose={() => setSelectedPlan(null)}
                 />
             )}
+
+            {/* WhatsApp Floating Button */}
+            <a
+                href="https://wa.link/cefejk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#128C7E] text-white p-3 md:p-4 rounded-full shadow-[0_0_20px_rgba(37,211,102,0.4)] transition-all transform hover:scale-110 flex items-center justify-center group"
+                aria-label="Contactar por WhatsApp"
+            >
+                <MessageCircle className="w-6 h-6 md:w-7 md:h-7" />
+                <span className="absolute right-full mr-4 bg-[#1e1e1e] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-[#2a2a2a]">
+                    ¿Tienes dudas? Escríbenos
+                </span>
+            </a>
         </div>
     );
 }
