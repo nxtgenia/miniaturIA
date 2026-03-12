@@ -411,6 +411,7 @@ export default function Landing() {
                         {/* Mute toggle button */}
                         <button
                             onClick={toggleMute}
+                            aria-label={isMuted ? "Activar sonido del vídeo" : "Silenciar vídeo"}
                             className="absolute bottom-6 right-6 z-30 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/10 text-white hover:bg-white hover:text-black transition-all"
                         >
                             {isMuted ? <Bot className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
@@ -760,7 +761,6 @@ export default function Landing() {
 
                 {/* CTA */}
                 <section className="py-24 px-6 relative overflow-hidden bg-[#ff0000]">
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-multiply" />
                     <div className="max-w-4xl mx-auto text-center relative z-10">
                         <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight">El próximo millón de views empieza con la miniatura.</h2>
                         <button onClick={scrollToPricing} className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black hover:bg-black hover:text-white border hover:border-white rounded-full text-base font-bold transition-all transform hover:scale-105 shadow-xl">

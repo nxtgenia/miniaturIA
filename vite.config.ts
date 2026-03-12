@@ -170,6 +170,18 @@ export default defineConfig(({ mode }) => {
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
       'process.env.KIE_API_KEY': JSON.stringify(env.KIE_API_KEY),
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            if (id.includes('@supabase')) return 'supabase';
+            if (id.includes('@google/genai')) return 'ai';
+            if (id.includes('/node_modules/motion') || id.includes('/node_modules/framer-motion')) return 'motion';
+            if (id.includes('lucide-react')) return 'icons';
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
