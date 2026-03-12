@@ -445,8 +445,8 @@ export default function Landing() {
                             <div className="animate-marquee gap-4">
                                 {/* Duplicate the array for a seamless loop */}
                                 {[
-                                    '/thumb_ejemplo_1.jpg', '/results/1.jpg', '/thumb_ejemplo_2.jpg', '/results/2.jpg', '/thumb_ejemplo_3.jpg', '/results/3.jpg', '/thumb_ejemplo_4.jpg', '/results/4.png', '/thumb_ejemplo_5.jpg',
-                                    '/thumb_ejemplo_1.jpg', '/results/1.jpg', '/thumb_ejemplo_2.jpg', '/results/2.jpg', '/thumb_ejemplo_3.jpg', '/results/3.jpg', '/thumb_ejemplo_4.jpg', '/results/4.png', '/thumb_ejemplo_5.jpg'
+                                    '/thumb_ejemplo_1.webp', '/results/1.webp', '/thumb_ejemplo_2.webp', '/results/2.webp', '/thumb_ejemplo_3.webp', '/results/3.webp', '/thumb_ejemplo_4.webp', '/results/4.webp', '/thumb_ejemplo_5.webp',
+                                    '/thumb_ejemplo_1.webp', '/results/1.webp', '/thumb_ejemplo_2.webp', '/results/2.webp', '/thumb_ejemplo_3.webp', '/results/3.webp', '/thumb_ejemplo_4.webp', '/results/4.webp', '/thumb_ejemplo_5.webp'
                                 ].map((src, i) => (
                                     <div
                                         key={`row1-${i}`}
@@ -456,6 +456,8 @@ export default function Landing() {
                                             src={src}
                                             alt={`Ejemplo de miniatura generada con IA para YouTube ${i + 1}`}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none"
+                                            loading="lazy"
+                                            decoding="async"
                                         />
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
                                     </div>
@@ -464,8 +466,8 @@ export default function Landing() {
                             <div className="animate-marquee-reverse gap-4">
                                 {/* Duplicate the array for a seamless loop, reversed order */}
                                 {[
-                                    '/thumb_ejemplo_5.jpg', '/results/4.png', '/thumb_ejemplo_4.jpg', '/results/3.jpg', '/thumb_ejemplo_3.jpg', '/results/2.jpg', '/thumb_ejemplo_2.jpg', '/results/1.jpg', '/thumb_ejemplo_1.jpg',
-                                    '/thumb_ejemplo_5.jpg', '/results/4.png', '/thumb_ejemplo_4.jpg', '/results/3.jpg', '/thumb_ejemplo_3.jpg', '/results/2.jpg', '/thumb_ejemplo_2.jpg', '/results/1.jpg', '/thumb_ejemplo_1.jpg'
+                                    '/thumb_ejemplo_5.webp', '/results/4.webp', '/thumb_ejemplo_4.webp', '/results/3.webp', '/thumb_ejemplo_3.webp', '/results/2.webp', '/thumb_ejemplo_2.webp', '/results/1.webp', '/thumb_ejemplo_1.webp',
+                                    '/thumb_ejemplo_5.webp', '/results/4.webp', '/thumb_ejemplo_4.webp', '/results/3.webp', '/thumb_ejemplo_3.webp', '/results/2.webp', '/thumb_ejemplo_2.webp', '/results/1.webp', '/thumb_ejemplo_1.webp'
                                 ].map((src, i) => (
                                     <div
                                         key={`row2-${i}`}
@@ -475,6 +477,8 @@ export default function Landing() {
                                             src={src}
                                             alt={`Ejemplo de miniatura generada con IA para YouTube ${i + 1}`}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none"
+                                            loading="lazy"
+                                            decoding="async"
                                         />
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
                                     </div>
@@ -664,7 +668,7 @@ export default function Landing() {
                                     <MessageSquare className="w-16 h-16 text-white" />
                                 </div>
                                 <div className="flex items-center gap-4 mb-6 relative z-10">
-                                    <img src={t.pfp} alt={t.name} className="w-12 h-12 rounded-full border-2 border-[#1e1e1e] group-hover:border-[#ff0000] transition-colors" />
+                                    <img src={t.pfp} alt={t.name} className="w-12 h-12 rounded-full border-2 border-[#1e1e1e] group-hover:border-[#ff0000] transition-colors" loading="lazy" decoding="async" />
                                     <div>
                                         <h4 className="font-bold text-white leading-tight">{t.name}</h4>
                                         <div className="flex items-center gap-2">
